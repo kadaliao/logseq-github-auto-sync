@@ -1,438 +1,551 @@
-# GitHub Auto Sync - 加密与密钥管理指南
+# GitHub Auto Sync - Encryption & Key Management Guide
 
-**版本**: 0.2.0
-**更新日期**: 2026-06-25
-**作者**: Kada Liao (kadaliao@gmail.com)
-
----
-
-## 一、核心概念（30 秒理解）
-
-### 什么是加密？
-
-> **加密 = 用"公开的锁"锁住文件，只有你有"唯一的钥匙"能打开**
-
-**现实类比：**
-- 🔒 **公钥 (recipients.txt)** = 你可以给别人的锁
-- 🔑 **私钥 (identity.txt)** = 只有你能用的钥匙
-- 📦 **加密文件** = 用锁锁住的保险箱
-
-**核心原则：**
-- 公钥可以随便分享（锁给别人也没关系）
-- 私钥绝对不能泄露（钥匙丢了就打不开保险箱）
-- 没有私钥 = 文件永久丢失（数学上无法破解）
+**Version**: 0.2.0
+**Last Updated**: 2026-06-25
+**Author**: Kada Liao (kadaliao@gmail.com)
 
 ---
 
-## 二、你需要管理的文件
+## Table of Contents
 
-### 文件清单（仅 2 个）
+- [1. Core Concepts (30-Second Overview)](#1-core-concepts-30-second-overview)
+- [2. Files You Need to Manage](#2-files-you-need-to-manage)
+- [3. First-Time Setup (5 Minutes)](#3-first-time-setup-5-minutes)
+- [4. Multi-Device Synchronization](#4-multi-device-synchronization)
+- [5. Consequences of Losing Your Keys](#5-consequences-of-losing-your-keys)
+- [6. Backup Strategies](#6-backup-strategies)
+- [7. Team Collaboration](#7-team-collaboration)
+- [8. Frequently Asked Questions](#8-frequently-asked-questions)
+- [9. Quick Reference](#9-quick-reference)
+- [10. Core Principles](#10-core-principles)
+- [11. Emergency Procedures](#11-emergency-procedures)
+
+---
+
+## 1. Core Concepts (30-Second Overview)
+
+### What is Encryption?
+
+> **Encryption = Locking files with a "public lock" that only you can open with a "unique key"**
+
+**Real-World Analogy:**
+- 🔒 **Public Key (recipients.txt)** = A lock you can give to others
+- 🔑 **Private Key (identity.txt)** = The only key that can open that lock
+- 📦 **Encrypted File** = A safe locked with that lock
+
+**Core Principles:**
+- Public keys can be shared freely (giving someone a lock is safe)
+- Private keys must never be exposed (losing your key = losing access)
+- Without the private key = permanent data loss (mathematically impossible to crack)
+
+> **中文说明**: 加密就像用一把"公开的锁"锁住文件，只有你有"唯一的钥匙"能打开。
+> - 公钥（recipients.txt）= 锁，可以随便给人
+> - 私钥（identity.txt）= 钥匙，绝对不能丢
+> - 丢了钥匙 = 文件永久丢失（数学上无法破解）
+
+---
+
+## 2. Files You Need to Manage
+
+### File Checklist (Only 2 Files)
 
 ```
 ~/.config/logseq-github-auto-sync/
-├── identity.txt      ← 🔑 私钥（必须备份！绝对不能泄露！）
-└── recipients.txt    ← 🔒 公钥（可以分享，无风险）
+├── identity.txt      ← 🔑 Private Key (MUST BACKUP! NEVER EXPOSE!)
+└── recipients.txt    ← 🔒 Public Key (safe to share, no risk)
 ```
 
-### identity.txt（私钥）
+### identity.txt (Private Key)
 
-**是什么：**
-- 你的私人密钥
-- 解密加密文件的唯一方法
-- 文件内容示例：
+**What it is:**
+- Your personal private key
+- The **only** way to decrypt encrypted files
+- File content example:
   ```
   AGE-SECRET-KEY-1ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ
   ```
 
-**存放位置（默认）：**
+**Default Location:**
 ```bash
 ~/.config/logseq-github-auto-sync/identity.txt
-# 完整路径：/Users/你的用户名/.config/logseq-github-auto-sync/identity.txt
+# Full path: /Users/YourUsername/.config/logseq-github-auto-sync/identity.txt
 ```
 
-**你需要做什么：**
-1. ✅ **生成一次**（30 秒）
-2. ✅ **备份一次**（1 分钟）
-3. ✅ **再也不用管**（插件自动使用）
+**What you need to do:**
+1. ✅ **Generate once** (30 seconds)
+2. ✅ **Backup once** (1 minute)
+3. ✅ **Never touch again** (plugin uses it automatically)
 
-**绝对禁止：**
-- ❌ 不能传到 GitHub
-- ❌ 不能粘贴到 Logseq 笔记
-- ❌ 不能通过微信/邮件发送
-- ❌ 不能放在桌面/Downloads 等公开位置
+**Absolute Prohibitions:**
+- ❌ Never upload to GitHub
+- ❌ Never paste into Logseq notes
+- ❌ Never send via chat/email
+- ❌ Never store on Desktop/Downloads
 
-### recipients.txt（公钥）
+> **中文**: identity.txt 是你的私钥，解密文件的唯一方法。生成后备份一次，就再也不用管了。
 
-**是什么：**
-- 公开的加密密钥
-- 用于加密文件，不能解密
-- 可以安全分享
+### recipients.txt (Public Key)
 
-**你需要做什么：**
-- ✅ 啥也不用做（插件自动使用）
-- ✅ 如果想和团队共享，可以收集所有人的 recipients.txt
+**What it is:**
+- Public encryption key
+- Used to encrypt files (cannot decrypt)
+- Safe to share with anyone
+
+**What you need to do:**
+- ✅ Nothing (plugin uses it automatically)
+- ✅ For team sharing: collect everyone's recipients.txt
+
+> **中文**: recipients.txt 是公钥，用于加密。可以随便分享，没有风险。
 
 ---
 
-## 三、首次设置（5 分钟）
+## 3. First-Time Setup (5 Minutes)
 
-### 步骤 1：生成密钥对
+### Step 1: Generate Key Pair
 
 ```bash
-# 创建目录
+# Create directory
 mkdir -p ~/.config/logseq-github-auto-sync
 chmod 700 ~/.config/logseq-github-auto-sync
 
-# 生成私钥（保存在 identity.txt）
+# Generate private key (saved to identity.txt)
 umask 077
 age-keygen -o ~/.config/logseq-github-auto-sync/identity.txt
 
-# 生成公钥（保存在 recipients.txt）
+# Generate public key (saved to recipients.txt)
 age-keygen -y ~/.config/logseq-github-auto-sync/identity.txt > ~/.config/logseq-github-auto-sync/recipients.txt
 
-# 设置权限
+# Set permissions
 chmod 600 ~/.config/logseq-github-auto-sync/identity.txt
 chmod 644 ~/.config/logseq-github-auto-sync/recipients.txt
 ```
 
-### 步骤 2：立即备份 identity.txt
+> **中文说明**: 
+> - `umask 077` 确保文件权限最严格
+> - `chmod 600` = 只有你能读写 identity.txt
+> - `chmod 644` = 所有人都能读 recipients.txt（没关系）
 
-**推荐方案（按优先级）：**
+### Step 2: Immediately Backup identity.txt
 
-1. **密码管理器**（最推荐）
+**Recommended Methods (by priority):**
+
+1. **Password Manager** (Most Recommended)
    - 1Password / Bitwarden / KeePassXC
-   - 创建安全笔记，粘贴 identity.txt 内容
+   - Create secure note, paste identity.txt content
 
-2. **离线存储**
-   - U 盘 / 移动硬盘
-   - 加密压缩包（`zip -e identity-backup.zip identity.txt`）
+2. **Offline Storage**
+   - USB drive / external SSD
+   - Encrypted zip: `zip -e identity-backup.zip identity.txt`
 
-3. **云端加密**（备选）
-   - iCloud / Dropbox（加密压缩包）
+3. **Cloud Storage** (Alternative)
+   - iCloud / Dropbox (only if encrypted first)
 
-### 步骤 3：验证配置
+> **中文**: 生成密钥后**立刻备份**！推荐用密码管理器（1Password、Bitwarden）或 U 盘离线存储。
+
+### Step 3: Verify Configuration
 
 ```bash
-# 检查文件存在
+# Check files exist
 ls -la ~/.config/logseq-github-auto-sync/
 
-# 检查权限
-# identity.txt 应该是 600 (-rw-------)
-# recipients.txt 应该是 644 (-rw-r--r--)
+# Check permissions
+# identity.txt should be 600 (-rw-------)
+# recipients.txt should be 644 (-rw-r--r--)
 ```
 
-**完成！** 🎉 之后再也不用管密钥了。
+**Done!** 🎉 You'll never need to touch the keys again.
 
 ---
 
-## 四、多台电脑同步
+## 4. Multi-Device Synchronization
 
-### 场景：公司电脑 → 家里电脑
+### Scenario: Work Computer → Home Computer
 
-**你需要做的：**
+**What you need to do:**
 
-1. ✅ **复制 identity.txt** 到家里电脑
+1. ✅ **Copy identity.txt** to home computer
    ```bash
-   # 方法：U 盘 / 密码管理器 / 加密压缩包
+   # Methods: USB drive / password manager / encrypted zip
    cp identity.txt ~/.config/logseq-github-auto-sync/
    ```
 
-2. ✅ **安装插件**（参考 README 安装步骤）
+2. ✅ **Install plugin** (see README for installation steps)
 
-3. ✅ **配置 GitHub repo URL**
+3. ✅ **Configure GitHub repo URL**
 
-4. ✅ **重启 Logseq，启用插件**
+4. ✅ **Restart Logseq, enable plugin**
 
-5. ✅ **完成！** 自动开始工作
+5. ✅ **Done!** It works automatically.
 
-**recipients.txt 需要吗？**
-- ✅ 可以不要（用 identity.txt 重新生成即可）
-- ✅ 也可以复制过去（省一步操作）
+**Do you need recipients.txt?**
+- ✅ Not required (recreate from identity.txt)
+- ✅ Or copy it (saves one step)
+
+> **中文**: 在新电脑上只需要做 3 件事：复制 identity.txt → 安装插件 → 配置 GitHub repo URL。
 
 ---
 
-## 五、丢失密钥的后果
+## 5. Consequences of Losing Your Keys
 
-### 🚨 核心警告
+### 🚨 Critical Warning
 
-> **如果 identity.txt 丢失，之前加密的所有文件将永远无法解密！**
+> **If identity.txt is lost, all previously encrypted files will be PERMANENTLY UNDECRYPTABLE!**
 
-### 后果详情
+### What Happens
 
 ```
-GitHub 上的加密文件
-├── pages/Salary.md          ← ❌ 永久丢失
-├── pages/Diary-2026.md      ← ❌ 永久丢失
-├── assets/Private-Photo.jpg ← ❌ 永久丢失
-└── journals/                ← ❌ 全部丢失
+Encrypted files on GitHub
+├── pages/Salary.md          ← ❌ Permanently lost
+├── pages/Diary-2026.md      ← ❌ Permanently lost
+├── assets/Private-Photo.jpg ← ❌ Permanently lost
+└── journals/                ← ❌ All lost
+
+Your notes → Gone forever 💸
 ```
 
-**为什么无法恢复：**
-- ❌ GitHub 客服帮不了你（他们看不到明文）
-- ❌ 密码破解软件没用（age 加密强度足够高）
-- ✅ **只有 identity.txt 能救你**
+**Why recovery is impossible:**
+- ❌ GitHub support can't help (they can't read encrypted files)
+- ❌ Password cracking won't work (age encryption is strong enough)
+- ✅ **Only identity.txt can save you**
 
-### 如果丢失了
+### If You Lose Your Keys
 
-**情况 A：有备份 ✅**
+**Scenario A: You have a backup ✅**
 ```bash
-# 从密码管理器/U盘恢复
+# Restore from password manager / USB drive
 cp ~/Documents/identity-backup/identity.txt ~/.config/logseq-github-auto-sync/
 age-keygen -y ~/.config/logseq-github-auto-sync/identity.txt > ~/.config/logseq-github-auto-sync/recipients.txt
-# 搞定！所有文件都能解密
+# Done! All files are recoverable
 ```
 
-**情况 B：没有备份 ❌**
+**Scenario B: No backup ❌**
 ```bash
-# 生成新密钥对
+# Generate new key pair
 age-keygen -o ~/.config/logseq-github-auto-sync/identity.txt
 age-keygen -y ~/.config/logseq-github-auto-sync/identity.txt > ~/.config/logseq-github-auto-sync/recipients.txt
 
-# ⚠️ 旧加密文件永久丢失
-# ✅ 但新文件可以用新密钥加密
+# ⚠️ Old encrypted files are permanently lost
+# ✅ But new files can be encrypted with the new key
 ```
+
+> **中文**: 如果丢失 identity.txt，之前加密的所有文件将**永远无法解密**！
+> - 有备份 → 恢复即可
+> - 没备份 → 旧文件永久丢失，只能生成新密钥对
 
 ---
 
-## 六、备份策略
+## 6. Backup Strategies
 
-### 推荐方案：3-2-1 原则
+### Recommended: 3-2-1 Backup Rule
 
 ```
-3 份拷贝：
-├── 主份：电脑上的 ~/.config/logseq-github-auto-sync/identity.txt
-├── 备份 1：密码管理器（1Password / Bitwarden）
-└── 备份 2：U 盘 / 移动硬盘（离线存储）
+3 Copies:
+├── Primary: Computer's ~/.config/logseq-github-auto-sync/identity.txt
+├── Backup 1: Password manager (1Password / Bitwarden)
+└── Backup 2: USB drive / external SSD (offline storage)
 
-2 种介质：
-├── 电脑硬盘
-└── U 盘
+2 Media Types:
+├── Computer hard drive
+└── USB drive
 
-1 份异地：
-└── 密码管理器（云端同步）
+1 Offsite Copy:
+└── Password manager (cloud-synced)
 ```
 
-### 备份方案对比
+### Backup Method Comparison
 
-| 方案 | 安全性 | 便利性 | 成本 | 推荐度 |
-|------|--------|--------|------|--------|
-| **密码管理器** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | 付费 | ✅✅✅✅✅ |
-| **加密压缩包** | ⭐⭐⭐⭐ | ⭐⭐⭐ | 免费 | ✅✅✅✅ |
-| **U 盘离线** | ⭐⭐⭐⭐⭐ | ⭐⭐ | 便宜 | ✅✅✅ |
-| **什么都不做** | ⭐ | ⭐⭐⭐⭐⭐ | 免费 | ❌❌❌ |
+| Method | Security | Convenience | Cost | Recommendation |
+|--------|----------|-------------|------|----------------|
+| **Password Manager** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | Paid | ✅✅✅✅✅ |
+| **Encrypted Zip** | ⭐⭐⭐⭐ | ⭐⭐⭐ | Free | ✅✅✅✅ |
+| **USB Drive** | ⭐⭐⭐⭐⭐ | ⭐⭐ | Cheap | ✅✅✅ |
+| **Print It** | ⭐⭐⭐⭐⭐ | ⭐ | Very Low | ✅✅ |
+| **Do Nothing** | ⭐ | ⭐⭐⭐⭐⭐ | Free | ❌❌❌ |
 
-### 测试备份有效性
+### Testing Your Backup (Annual Ritual)
 
-**每年一次，确保备份可用：**
+**Why test?**
+> **Untested backup = No backup**
+
+You might encounter:
+- File corruption during copy
+- Forgotten zip password
+- Failed password manager export
+
+**Test steps (once per year):**
 
 ```bash
-# 1. 模拟丢失主密钥
+# 1. Create temporary directory
+mkdir -p ~/tmp/backup-test && cd ~/tmp/backup-test
+
+# 2. Simulate key loss
 rm ~/.config/logseq-github-auto-sync/identity.txt
 
-# 2. 从备份恢复
+# 3. Restore from backup
+# Method A: Copy from password manager
+# Method B: Copy from USB drive
+# Method C: Extract encrypted zip
 cp ~/Documents/identity-backup/identity.txt ~/.config/logseq-github-auto-sync/
 
-# 3. 测试解密
+# 4. Test decryption
 cd ~/tmp && git clone git@github.com:you/your-logseq.git test-decrypt
 cd test-decrypt
 node ~/logseq-github-auto-sync/scripts/sync-helper.js decrypt-working-tree
 
-# 4. 如果能解密 → 备份有效 ✅
-# 如果失败 → 备份无效 ❌（重新备份）
+# 5. Success = Backup works ✅
+#    Failure = Backup invalid ❌ (re-backup immediately!)
 
-# 5. 清理
+# 6. Cleanup
 rm -rf ~/tmp/backup-test ~/tmp/test-decrypt
 ```
 
+> **中文**: 
+> - 每年测试一次备份
+> - 模拟丢失主密钥，从备份恢复，测试是否能解密
+> - 没测试过的备份 = 没有备份
+
 ---
 
-## 七、团队协作（可选）
+## 7. Team Collaboration
 
-### 场景：和同事共享加密笔记
+### Scenario: Share Encrypted Notes with Colleagues
 
-**步骤：**
+**Steps:**
 
-1. **每个人生成自己的密钥对**
+1. **Each person generates their own key pair**
    ```bash
-   # 你、Alice、Bob 各自执行
+   # You, Alice, and Bob each run:
    age-keygen -o ~/.config/logseq-github-auto-sync/identity.txt
    age-keygen -y ~/.config/logseq-github-auto-sync/identity.txt > ~/.config/logseq-github-auto-sync/recipients.txt
    ```
 
-2. **收集所有人的 recipients.txt**
+2. **Collect everyone's recipients.txt**
    ```
    ~/.config/logseq-github-auto-sync/recipients-team.txt
-   ├── 你的 recipients.txt
-   ├── Alice 的 recipients.txt
-   └── Bob 的 recipients.txt
+   ├── Your recipients.txt
+   ├── Alice's recipients.txt
+   └── Bob's recipients.txt
    ```
 
-3. **配置插件**
+3. **Configure plugin**
    ```
    recipientsPath = ~/.config/logseq-github-auto-sync/recipients-team.txt
    ```
 
-**效果：**
-- 你加密的文件，Alice 和 Bob 都能解密
-- Alice 加密的文件，你也能解密
-- 每个人用自己的私钥解密
+**Result:**
+- Files you encrypt → Alice and Bob can decrypt ✅
+- Files Alice encrypts → You can decrypt ✅
+- Everyone uses their own private key to decrypt
+
+> **中文**: 团队协作时，每个人有自己的私钥，但共享一个 recipients-team.txt 文件。
+> 
+> **步骤**: 
+> 1. 每人生成自己的密钥对
+> 2. 收集所有人的 recipients.txt 到一个文件
+> 3. 在插件设置中配置 recipientsPath
 
 ---
 
-## 八、常见问题
+## 8. Frequently Asked Questions
 
-### Q1: recipients.txt 是什么？需要备份吗？
+### Q1: What is recipients.txt? Do I need to back it up?
 
-**A:** recipients.txt 是公钥，可以从 identity.txt 随时重新生成，**不需要备份**。
+**A:** recipients.txt is the public key. It can be regenerated from identity.txt anytime. **No backup needed.**
 
-### Q2: 如果在多台电脑用，需要多套密钥吗？
+> **中文**: recipients.txt 是公钥，可以从 identity.txt 随时重新生成，不需要备份。
 
-**A:** 不需要。**同一套 identity.txt 可以复制到所有设备**，共享同一套加密文件。
+### Q2: Do I need separate keys for multiple devices?
 
-### Q3: 密钥有有效期吗？需要定期更换吗？
+**A:** No. **The same identity.txt can be copied to all devices** to share the same encrypted files.
 
-**A:** 理论上不需要。但如果怀疑密钥泄露，立即更换：
+> **中文**: 不需要。同一套 identity.txt 可以复制到所有设备，共享同一套加密文件。
+
+### Q3: Do keys expire? Should I rotate them regularly?
+
+**A:** Theoretically, no. But if you suspect key compromise, rotate immediately:
 ```bash
 age-keygen -o ~/.config/logseq-github-auto-sync/identity.txt
 age-keygen -y ~/.config/logseq-github-auto-sync/identity.txt > ~/.config/logseq-github-auto-sync/recipients.txt
 ```
 
-### Q4: 有人拿到了我的 identity.txt 怎么办？
+> **中文**: 理论上不需要定期更换。但如果怀疑密钥泄露，立即生成新密钥对。
+
+### Q4: What if someone gets my identity.txt?
 
 **A:**
-1. 立即生成新密钥对
-2. 用新密钥重新加密所有文件（运行一次同步）
-3. 旧密钥作废
+1. Generate new key pair immediately
+2. Re-encrypt all files (run one full sync)
+3. Old key is now compromised (but they can't decrypt past files without it)
 
-### Q5: 可以同时用多个 recipients 文件吗？
+> **中文**: 如果怀疑密钥泄露，立即生成新密钥对并重新同步所有文件。
 
-**A:** 可以。创建一个合并文件：
+### Q5: Can I use multiple recipients files?
+
+**A:** Yes. Create a combined file:
 ```bash
 cat ~/.config/logseq-github-auto-sync/recipients.txt > ~/.config/logseq-github-auto-sync/recipients-team.txt
 cat ~/Documents/alice-recipients.txt >> ~/.config/logseq-github-auto-sync/recipients-team.txt
 ```
 
+> **中文**: 可以。创建一个合并文件，包含多个人的公钥即可。
+
 ---
 
-## 九、快速参考
+## 9. Quick Reference
 
-### 文件位置速查
+### File Location Cheat Sheet
 
-| 文件 | 路径 | 用途 |
-|------|------|------|
-| 私钥 | `~/.config/logseq-github-auto-sync/identity.txt` | 解密（必须备份） |
-| 公钥 | `~/.config/logseq-github-auto-sync/recipients.txt` | 加密（可重新生成） |
+| File | Path | Purpose |
+|------|------|---------|
+| Private Key | `~/.config/logseq-github-auto-sync/identity.txt` | Decryption (MUST BACKUP) |
+| Public Key | `~/.config/logseq-github-auto-sync/recipients.txt` | Encryption (regeneratable) |
 
-### 常用命令速查
+### Common Commands
 
 ```bash
-# 生成密钥对
+# Generate key pair
 age-keygen -o ~/.config/logseq-github-auto-sync/identity.txt
 age-keygen -y ~/.config/logseq-github-auto-sync/identity.txt > ~/.config/logseq-github-auto-sync/recipients.txt
 
-# 重新生成公钥（如果丢了）
+# Regenerate public key (if lost)
 age-keygen -y ~/.config/logseq-github-auto-sync/identity.txt > ~/.config/logseq-github-auto-sync/recipients.txt
 
-# 设置权限
+# Set permissions
 chmod 600 ~/.config/logseq-github-auto-sync/identity.txt
 chmod 644 ~/.config/logseq-github-auto-sync/recipients.txt
 
-# 解密整个工作区
+# Decrypt entire workspace
 node ~/logseq-github-auto-sync/scripts/sync-helper.js decrypt-working-tree
 
-# 加密指定文件
+# Encrypt specific file
 age -R ~/.config/logseq-github-auto-sync/recipients.txt -o encrypted.md.age encrypted.md
 ```
 
-### 安全检查清单
+### Security Checklist
 
-**首次设置（1 次）：**
-- [ ] 生成 identity.txt 和 recipients.txt
-- [ ] 备份 identity.txt 到密码管理器
-- [ ] 备份 identity.txt 到 U 盘（可选）
-- [ ] 设置正确的文件权限（600/644）
+**First-time Setup (once):**
+- [ ] Generate identity.txt and recipients.txt
+- [ ] Backup identity.txt to password manager
+- [ ] Backup identity.txt to USB drive (optional)
+- [ ] Set correct file permissions (600/644)
 
-**日常使用（每月）：**
-- [ ] 确认 identity.txt 仍然存在
-- [ ] 确认密码管理器中的备份有效
+**Monthly:**
+- [ ] Confirm identity.txt still exists
+- [ ] Confirm password manager backup is accessible
 
-**定期维护（每年）：**
-- [ ] 测试备份有效性（参考第六节）
-- [ ] 更新密码管理器备份
-- [ ] 检查文件权限
+**Yearly:**
+- [ ] Test backup validity (see Section 6)
+- [ ] Update password manager backup
+- [ ] Check file permissions
 
 ---
 
-## 十、核心原则（记住这些就够了）
+## 10. Core Principles
 
-### ✅ 要做的事
+### ✅ Do This
 
-1. ✅ **备份 identity.txt**（生成后立刻备份）
-2. ✅ **放到密码管理器**（最安全、最方便）
-3. ✅ **定期测试备份**（每年一次）
+1. ✅ **Backup identity.txt** (immediately after generation)
+2. ✅ **Use password manager** (safest, most convenient)
+3. ✅ **Test backups annually** (ensure they work)
 
-### ❌ 不要做的事
+### ❌ Don't Do This
 
-1. ❌ **不要泄露 identity.txt**（绝对不能给别人）
-2. ❌ **不要传到 GitHub**（插件会自动忽略，但不要冒险）
-3. ❌ **不要依赖单点备份**（至少 2 个备份）
+1. ❌ **Never expose identity.txt** (absolutely never share)
+2. ❌ **Never upload to GitHub** (plugin ignores it, but don't risk it)
+3. ❌ **Never rely on single backup** (minimum 2 backups)
 
-### 💡 黄金法则
+### 💡 Golden Rule
 
-> **identity.txt = 你的所有加密笔记**
+> **identity.txt = All your encrypted notes**
 >
-> - 丢了它 = 丢了所有笔记
-> - 备份它 = 备份一切
-> - 保护它 = 保护你的隐私
+> - Lose it = Lose everything
+> - Backup it = Backup everything
+> - Protect it = Protect your privacy
 
 ---
 
-## 十一、紧急情况处理
+## 11. Emergency Procedures
 
-### 场景 1：电脑坏了，但有密码管理器备份
+### Scenario 1: Computer died, but password manager backup exists
 
 ```bash
-# 1. 买新电脑，安装 Logseq 和 age
-# 2. 从密码管理器导出 identity.txt
-# 3. 放到 ~/.config/logseq-github-auto-sync/
-# 4. 克隆 GitHub 仓库
-# 5. 运行解密命令
-# 6. 搞定！5 分钟恢复所有笔记
+# 1. Buy new computer, install Logseq and age
+# 2. Export identity.txt from password manager
+# 3. Place in ~/.config/logseq-github-auto-sync/
+# 4. Clone GitHub repository
+# 5. Run decryption command
+# 6. Done! All notes recovered in 5 minutes
 ```
 
-### 场景 2：丢了 U 盘但密码管理器有备份
+### Scenario 2: Lost USB drive, but password manager has backup
 
 ```bash
-# 从密码管理器恢复
-# 再买一个 U 盘备份即可
+# Restore from password manager
+# Buy new USB drive for backup
 ```
 
-### 场景 3：怀疑密钥泄露
+### Scenario 3: Suspect key compromise
 
 ```bash
-# 1. 生成新密钥对（1 分钟）
+# 1. Generate new key pair (1 minute)
 age-keygen -o ~/.config/logseq-github-auto-sync/identity.txt
 age-keygen -y ~/.config/logseq-github-auto-sync/identity.txt > ~/.config/logseq-github-auto-sync/recipients.txt
 
-# 2. 运行一次完整同步（重新加密所有文件）
-# 3. 旧密钥作废
+# 2. Run one full sync (re-encrypt all files)
+# 3. Old key is now obsolete
 
-# 4. 更新密码管理器中的备份
+# 4. Update password manager backup
 ```
 
 ---
 
-## 参考资源
+## Appendix: Real-World Examples
 
-- **完整文档**: [README.md](https://github.com/kadaliao/logseq-github-auto-sync/blob/main/README.md)
-- **快速开始**: [QUICKSTART.md](https://github.com/kadaliao/logseq-github-auto-sync/blob/main/QUICKSTART.md)
-- **架构说明**: [ARCHITECTURE.md](https://github.com/kadaliao/logseq-github-auto-sync/blob/main/ARCHITECTURE.md)
-- **插件仓库**: https://github.com/kadaliao/logseq-github-auto-sync
-- **问题反馈**: https://github.com/kadaliao/logseq-github-auto-sync/issues
+### Example A: Had backup ✅
+
+> "I got a new Mac, exported identity.txt from 1Password, recovered all encrypted notes in 5 minutes."
+
+### Example B: No backup ❌
+
+> "Hard drive failed, identity.txt was lost, 3 years of encrypted notes gone 😭"
+> 
+> —— This is not a joke, it really happens
 
 ---
 
-**最后提醒：**
-> 🔑 **现在就备份 identity.txt！不要等到丢的那天。**
+## Quick Action Checklist
 
-5 分钟的备份 = 几年的笔记安全。现在就做。 ✅
+**Do this NOW (5 minutes):**
+
+```bash
+# 1. Check if identity.txt exists
+ls -la ~/.config/logseq-github-auto-sync/identity.txt
+
+# 2. If exists, backup to password manager
+# Open 1Password/Bitwarden, paste identity.txt content
+
+# 3. Extra backup to USB drive
+cp ~/.config/logseq-github-auto-sync/identity.txt /Volumes/USB/
+
+# 4. Set reminder
+# Add calendar event: remind in 12 months to test backup
+```
+
+**Completing these 4 steps = peace of mind!** 🎉
+
+---
+
+## Additional Resources
+
+- **Full Documentation**: [README.md](https://github.com/kadaliao/logseq-github-auto-sync/blob/main/README.md)
+- **Quick Start**: [QUICKSTART.md](https://github.com/kadaliao/logseq-github-auto-sync/blob/main/QUICKSTART.md)
+- **Architecture**: [ARCHITECTURE.md](https://github.com/kadaliao/logseq-github-auto-sync/blob/main/ARCHITECTURE.md)
+- **Plugin Repository**: https://github.com/kadaliao/logseq-github-auto-sync
+- **Report Issues**: https://github.com/kadaliao/logseq-github-auto-sync/issues
+
+---
+
+**Final Reminder:**
+> 🔑 **Backup identity.txt NOW! Don't wait until it's too late.**
+> 
+> 5 minutes of backup work = Years of notes secured. Do it now. ✅
