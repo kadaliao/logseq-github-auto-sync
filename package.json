@@ -1,0 +1,19 @@
+{
+  "name": "logseq-github-auto-sync",
+  "version": "0.1.0",
+  "description": "Configurable GitHub sync for a local Logseq graph.",
+  "main": "dist/index.html",
+  "author": "liaoxingyi + Codex",
+  "license": "MIT",
+  "scripts": {
+    "test": "node test/sync-core.test.js && node test/sync-helper.test.js && node test/main-plugin-root.test.js && node test/performance.test.js",
+    "server": "node scripts/sync-server.js"
+  },
+  "logseq": {
+    "id": "logseq-github-auto-sync",
+    "title": "GitHub Auto Sync",
+    "icon": "./icon.svg"
+  },
+  "title": "GitHub Auto Sync",
+  "effect": true
+}
