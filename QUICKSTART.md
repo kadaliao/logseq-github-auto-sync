@@ -1,5 +1,7 @@
 # Quick Start Guide
 
+> 📖 **阅读 / Read**: [中文版](QUICKSTART-zh.md) | English (this page)
+
 ## 5-Minute Setup
 
 ### 1. Install Prerequisites
@@ -278,7 +280,7 @@ Restart Logseq to apply updates.
 
 ## Getting Help
 
-- 📖 [Full Documentation](README.md)
-- 🏗️ [Architecture](ARCHITECTURE.md)
-- 🐛 [Report Issues](https://github.com/kadaliao/logseq-github-auto-sync/issues)
-- 💬 [Discussions](https://github.com/kadaliao/logseq-github-auto-sync/discussions)
+- 📖 [Full Documentation (EN)](README.md) | [完整文档 (中文)](README-zh.md)
+- 🏗️ [Architecture (EN)](ARCHITECTURE.md) | [架构说明 (中文)](ARCHITECTURE-zh.md)
+- 🔐 [Encryption & Key Management (EN)](ENCRYPTION-GUIDE.md) | [加密与密钥管理 (中文)](ENCRYPTION-GUIDE-zh.md)
+- 🤝 [Contributing (EN)](CONTRIBUTING.md) | [贡献指南 (中文)](CONTRIBUTING-zh.md)

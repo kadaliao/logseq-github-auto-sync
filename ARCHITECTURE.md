@@ -1,5 +1,7 @@
 # Architecture
 
+> 📖 **阅读 / Read**: [中文版](ARCHITECTURE-zh.md) | English (this page)
+
 This document describes the architecture of the `logseq-github-auto-sync` plugin.
 
 ## Overview
@@ -429,3 +431,12 @@ npm test
 **Dev**:
 - Node.js 18+
 - No npm packages (uses only stdlib)
+
+## Related Documentation
+
+- 📖 [README (EN)](README.md) | [完整文档 (中文)](README-zh.md)
+- 🚀 [Quick Start (EN)](QUICKSTART.md) | [快速开始 (中文)](QUICKSTART-zh.md)
+- 🔐 [Encryption & Key Management (EN)](ENCRYPTION-GUIDE.md) | [加密与密钥管理 (中文)](ENCRYPTION-GUIDE-zh.md)
+- 🤝 [Contributing (EN)](CONTRIBUTING.md) | [贡献指南 (中文)](CONTRIBUTING-zh.md)
+- **Plugin Repository**: https://github.com/kadaliao/logseq-github-auto-sync
+- **Report Issues**: https://github.com/kadaliao/logseq-github-auto-sync/issues

@@ -2,6 +2,8 @@
 
 Encrypt and sync your Logseq graph to GitHub with automatic secret scanning.
 
+> 📖 **阅读 / Read**: [中文版](README-zh.md) | English (this page)
+
 ## Features
 
 - 🔒 Encrypts tagged files with **age** before syncing
@@ -131,9 +133,10 @@ git lfs install
 
 ## Docs
 
-- [Full Documentation](QUICKSTART.md)
-- [Architecture](ARCHITECTURE.md)
-- [Contributing](CONTRIBUTING.md)
+- 📖 [Full Documentation (EN)](QUICKSTART.md) | [完整文档 (中文)](QUICKSTART-zh.md)
+- 🏗️ [Architecture (EN)](ARCHITECTURE.md) | [架构说明 (中文)](ARCHITECTURE-zh.md)
+- 🔐 [Encryption & Key Management (EN)](ENCRYPTION-GUIDE.md) | [加密与密钥管理 (中文)](ENCRYPTION-GUIDE-zh.md)
+- 🤝 [Contributing (EN)](CONTRIBUTING.md) | [贡献指南 (中文)](CONTRIBUTING-zh.md)
 
 ## License
 

@@ -1,5 +1,7 @@
 # GitHub Auto Sync - Encryption & Key Management Guide
 
+> 📖 **阅读 / Read**: [中文版](ENCRYPTION-GUIDE-zh.md) | English (this page)
+
 **Version**: 0.2.0
 **Last Updated**: 2026-06-25
 **Author**: Kada Liao (kadaliao@gmail.com)
@@ -535,11 +537,12 @@ cp ~/.config/logseq-github-auto-sync/identity.txt /Volumes/USB/
 
 ---
 
-## Additional Resources
+## Related Documentation
 
-- **Full Documentation**: [README.md](https://github.com/kadaliao/logseq-github-auto-sync/blob/main/README.md)
-- **Quick Start**: [QUICKSTART.md](https://github.com/kadaliao/logseq-github-auto-sync/blob/main/QUICKSTART.md)
-- **Architecture**: [ARCHITECTURE.md](https://github.com/kadaliao/logseq-github-auto-sync/blob/main/ARCHITECTURE.md)
+- 📖 [README (EN)](README.md) | [完整文档 (中文)](README-zh.md)
+- 🚀 [Quick Start (EN)](QUICKSTART.md) | [快速开始 (中文)](QUICKSTART-zh.md)
+- 🏗️ [Architecture (EN)](ARCHITECTURE.md) | [架构说明 (中文)](ARCHITECTURE-zh.md)
+- 🤝 [Contributing (EN)](CONTRIBUTING.md) | [贡献指南 (中文)](CONTRIBUTING-zh.md)
 - **Plugin Repository**: https://github.com/kadaliao/logseq-github-auto-sync
 - **Report Issues**: https://github.com/kadaliao/logseq-github-auto-sync/issues
 

@@ -1,5 +1,7 @@
 # Contributing to GitHub Auto Sync
 
+> 📖 **阅读 / Read**: [中文版](CONTRIBUTING-zh.md) | English (this page)
+
 Thank you for your interest in contributing! This document provides guidelines and instructions.
 
 ## Code of Conduct
@@ -299,12 +301,11 @@ Include:
 - Redact logs (use `redactGitOutput()`)
 - Test with real age keys (not dummy data)
 
-## Questions?
+## Related Documentation
 
-- Open a GitHub Discussion for general questions
-- Join the Logseq Discord for real-time chat
-- Check existing docs before asking
-
-## License
-
-By contributing, you agree that your contributions will be licensed under the MIT License.
+- 📖 [README (EN)](README.md) | [完整文档 (中文)](README-zh.md)
+- 🚀 [Quick Start (EN)](QUICKSTART.md) | [快速开始 (中文)](QUICKSTART-zh.md)
+- 🏗️ [Architecture (EN)](ARCHITECTURE.md) | [架构说明 (中文)](ARCHITECTURE-zh.md)
+- 🔐 [Encryption & Key Management (EN)](ENCRYPTION-GUIDE.md) | [加密与密钥管理 (中文)](ENCRYPTION-GUIDE-zh.md)
+- **Plugin Repository**: https://github.com/kadaliao/logseq-github-auto-sync
+- **Report Issues**: https://github.com/kadaliao/logseq-github-auto-sync/issues
