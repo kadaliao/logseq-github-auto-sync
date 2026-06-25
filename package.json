@@ -4,7 +4,8 @@
   "description": "Encrypted GitHub sync for Logseq with age encryption and secret scanning",
   "main": "dist/index.html",
   "author": {
-    "name": "liaoxingyi",
+    "name": "Kada Liao",
+    "email": "kadaliao@gmail.com",
     "url": "https://github.com/kadaliao"
   },
   "license": "MIT",
