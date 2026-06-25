@@ -1,19 +1,41 @@
 {
   "name": "logseq-github-auto-sync",
-  "version": "0.1.0",
-  "description": "Configurable GitHub sync for a local Logseq graph.",
+  "version": "0.2.0",
+  "description": "Encrypted GitHub sync for Logseq with age encryption and secret scanning",
   "main": "dist/index.html",
-  "author": "liaoxingyi + Codex",
+  "author": {
+    "name": "liaoxingyi",
+    "url": "https://github.com/kadaliao"
+  },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kadaliao/logseq-github-auto-sync.git",
+    "directory": "."
+  },
+  "keywords": [
+    "logseq",
+    "github",
+    "sync",
+    "encryption",
+    "age",
+    "secret",
+    "security",
+    "backup"
+  ],
   "scripts": {
     "test": "node test/sync-core.test.js && node test/sync-helper.test.js && node test/main-plugin-root.test.js && node test/performance.test.js",
-    "server": "node scripts/sync-server.js"
+    "server": "node scripts/sync-server.js",
+    "server:dev": "LOGSEQ_GITHUB_SYNC_GRAPH=$(pwd) node scripts/sync-server.js",
+    "scan": "node scripts/sync-helper.js scan",
+    "sync": "node scripts/sync-helper.js sync"
   },
   "logseq": {
     "id": "logseq-github-auto-sync",
     "title": "GitHub Auto Sync",
-    "icon": "./icon.svg"
-  },
-  "title": "GitHub Auto Sync",
-  "effect": true
+    "icon": "./icon.svg",
+    "effect": true,
+    "createdAt": 1716355200000
+  }
 }
+

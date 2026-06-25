@@ -94,8 +94,15 @@ function git(cwd, args, options = {}) {
 }
 
 function getGraphRoot() {
+  // 1. Environment variable (explicit)
+  const envGraph = process.env.LOGSEQ_GITHUB_SYNC_GRAPH;
+  if (envGraph) return expandHome(envGraph);
+
+  // 2. Git top-level (if we're in a git repo)
   const result = git(process.cwd(), ["rev-parse", "--show-toplevel"], { allowFailure: true });
   if (result.status === 0 && result.stdout.trim()) return result.stdout.trim();
+
+  // 3. Current directory
   return process.cwd();
 }
 

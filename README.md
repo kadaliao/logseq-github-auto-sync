@@ -2,7 +2,114 @@
 
 A local Logseq plugin that syncs this graph to GitHub through an encrypted staging repository. Local Logseq files stay plaintext and editable. Files tagged with configured encryption tags are copied to the staging repo as **age ciphertext** before Git commit/push.
 
-## Architecture
+## Features
+
+- 🔒 Encrypts tagged files with age before syncing to GitHub
+- 🔍 Scans for secrets (API keys, tokens, passwords) before push
+- 📦 Git LFS support for large files
+- ⏰ Automatic timed sync with configurable intervals
+- 🛡️ No hardcoded paths - works with any Logseq graph
+- 🌐 Works on macOS, Linux, and Windows (with WSL)
+
+## Installation
+
+### Option 1: From GitHub (Recommended)
+
+1. **Clone or download** this repository to your local machine:
+
+```bash
+git clone git@github.com:kadaliao/logseq-github-auto-sync.git ~/logseq-github-auto-sync
+cd ~/logseq-github-auto-sync
+```
+
+2. **Copy the plugin** to your Logseq plugins directory:
+
+```bash
+# macOS/Linux
+mkdir -p ~/.logseq/plugins
+cp -r dist ~/.logseq/plugins/logseq-github-auto-sync
+cp icon.svg ~/.logseq/plugins/logseq-github-auto-sync/
+cp package.json ~/.logseq/plugins/logseq-github-auto-sync/
+
+# Or use symlink (easier for updates)
+ln -sf ~/logseq-github-auto-sync/dist ~/.logseq/plugins/logseq-github-auto-sync
+ln -sf ~/logseq-github-auto-sync/icon.svg ~/.logseq/plugins/logseq-github-auto-sync/
+ln -sf ~/logseq-github-auto-sync/package.json ~/.logseq/plugins/logseq-github-auto-sync/
+```
+
+3. **Install dependencies**:
+
+```bash
+# Install age (encryption)
+brew install age  # macOS
+# or: sudo apt install age  # Linux
+
+# Install git-lfs (optional, for large files)
+brew install git-lfs  # macOS
+git lfs install
+```
+
+4. **Restart Logseq** - the plugin should appear in your plugin settings.
+
+### Option 2: From Logseq Plugin Marketplace (Coming Soon)
+
+The plugin will be available in the Logseq Plugin Marketplace once approved.
+
+### Option 3: Manual Download
+
+1. Download the latest release from GitHub
+2. Extract to `~/.logseq/plugins/logseq-github-auto-sync/`
+3. Follow steps 3-4 from Option 1
+
+## Post-Installation Setup
+
+After installing the plugin, you need to set up encryption keys:
+
+1. **Create config directory**:
+
+```bash
+mkdir -p ~/.config/logseq-github-auto-sync
+chmod 700 ~/.config/logseq-github-auto-sync
+```
+
+2. **Generate age keys**:
+
+```bash
+umask 077
+age-keygen -o ~/.config/logseq-github-auto-sync/identity.txt
+age-keygen -y ~/.config/logseq-github-auto-sync/identity.txt > ~/.config/logseq-github-auto-sync/recipients.txt
+chmod 600 ~/.config/logseq-github-auto-sync/identity.txt
+chmod 644 ~/.config/logseq-github-auto-sync/recipients.txt
+```
+
+3. **Backup your identity** - Store `identity.txt` in a safe place (password manager, offline backup). **Do not commit it to Git.**
+
+4. **Configure the plugin**:
+   - Open Logseq → Settings → Plugins → GitHub Auto Sync
+   - Set your GitHub repo URL
+   - Verify other settings (age path, recipients path, etc.)
+
+## Uninstallation
+
+```bash
+# Remove plugin
+rm -rf ~/.logseq/plugins/logseq-github-auto-sync
+
+# Optional: Remove config (will delete encryption keys!)
+# rm -rf ~/.config/logseq-github-auto-sync
+
+# Optional: Remove staging repo from your graph
+# rm -rf ~/path/to/your/graph/.logseq-github-auto-sync
+```
+
+## Requirements
+
+- **Logseq** 0.8.0 or later
+- **Node.js** 18+ (for running helper scripts)
+- **age** 1.0+ (for encryption)
+- **git** 2.30+
+- **git-lfs** (optional, for files >50MB)
+- **rsync** (for fast file copying)
 
 ```
 ┌─────────────┐

@@ -1,0 +1,37 @@
+{
+  "id": "logseq-github-auto-sync",
+  "name": "GitHub Auto Sync",
+  "version": "0.2.0",
+  "description": "Encrypted GitHub sync for Logseq with age encryption and secret scanning. Sync your graph securely with automatic secret detection.",
+  "author": {
+    "name": "liaoxingyi",
+    "url": "https://github.com/kadaliao"
+  },
+  "main": "dist/index.html",
+  "logo": "icon.svg",
+  "effect": true,
+  "categories": ["sync", "encryption", "security"],
+  "keywords": [
+    "logseq",
+    "github",
+    "sync",
+    "encryption",
+    "age",
+    "secret",
+    "security",
+    "backup"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kadaliao/logseq-github-auto-sync.git",
+    "directory": "."
+  },
+  "license": "MIT",
+  "logseq": {
+    "id": "logseq-github-auto-sync",
+    "title": "GitHub Auto Sync",
+    "icon": "./icon.svg",
+    "effect": true,
+    "createdAt": 1716355200000
+  }
+}

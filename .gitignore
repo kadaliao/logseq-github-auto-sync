@@ -1,0 +1,35 @@
+# Logseq GitHub Auto Sync - Dependencies
+
+# Age keys (NEVER commit these!)
+~/.config/logseq-github-auto-sync/identity.txt
+~/.config/logseq-github-auto-sync/recipients*.txt
+
+# Local state
+.logseq-github-auto-sync/
+sync-repo/
+
+# Logseq internal
+.logseq/
+logseq/bak/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Test artifacts
+test/tmp/
+test/performance/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment
+.env
+.env.local

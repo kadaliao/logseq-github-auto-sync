@@ -9,7 +9,32 @@ const { spawn } = require("child_process");
 
 const PORT = Number(process.env.LOGSEQ_GITHUB_SYNC_PORT || 31937);
 const HOST = process.env.LOGSEQ_GITHUB_SYNC_HOST || "127.0.0.1";
-const GRAPH_ROOT = expandHome(process.env.LOGSEQ_GITHUB_SYNC_GRAPH || "~/logseq-graph");
+
+/**
+ * Detect the Logseq graph root directory.
+ * Priority:
+ * 1. LOGSEQ_GITHUB_SYNC_GRAPH environment variable (explicit)
+ * 2. Current working directory (if it's a Logseq graph)
+ * 3. Fallback to ~/logseq-graph (backward compatibility)
+ */
+function detectGraphRoot() {
+  // 1. Environment variable
+  const envGraph = process.env.LOGSEQ_GITHUB_SYNC_GRAPH;
+  if (envGraph) return expandHome(envGraph);
+
+  // 2. Current directory (check if it looks like a Logseq graph)
+  try {
+    const cwd = process.cwd();
+    if (fs.existsSync(path.join(cwd, ".logseq")) || fs.existsSync(path.join(cwd, "logseq"))) {
+      return cwd;
+    }
+  } catch (_) {}
+
+  // 3. Default fallback
+  return expandHome("~/logseq-graph");
+}
+
+const GRAPH_ROOT = detectGraphRoot();
 const SETTINGS_PATH = expandHome(process.env.LOGSEQ_GITHUB_SYNC_SETTINGS || "~/.logseq/settings/logseq-github-auto-sync.json");
 const HELPER = path.join(__dirname, "sync-helper.js");
 const NODE = process.execPath;
