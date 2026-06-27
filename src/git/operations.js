@@ -2,8 +2,9 @@
  * Git operations wrapper with error handling.
  */
 
-const { execSync } = require("child_process");
+const { spawnSync } = require("child_process");
 const path = require("path");
+const fs = require("fs");
 
 class GitError extends Error {
   constructor(message, command, cwd) {
@@ -22,49 +23,39 @@ class GitError extends Error {
  * @returns {object} { stdout, stderr, status }
  */
 function git(cwd, args, options = {}) {
-  const cmd = ["git", ...args].join(" ");
-  try {
-    const stdout = execSync(cmd, {
-      cwd,
-      encoding: "utf8",
-      maxBuffer: options.maxBuffer || 20 * 1024 * 1024,
-      env: Object.assign({}, process.env, options.env || {}),
-      stdio: options.allowFailure ? ["ignore", "pipe", "pipe"] : ["ignore", "pipe", "pipe"]
-    });
+  const result = spawnSync("git", args, {
+    cwd,
+    encoding: "utf8",
+    maxBuffer: options.maxBuffer || 20 * 1024 * 1024,
+    env: Object.assign({}, process.env, options.env || {}),
+    stdio: ["ignore", "pipe", "pipe"]
+  });
 
-    return {
-      stdout: stdout || "",
-      stderr: "",
-      status: 0
-    };
-  } catch (error) {
-    if (options.allowFailure) {
-      return {
-        stdout: error.stdout || "",
-        stderr: error.stderr || "",
-        status: error.status || 1
-      };
-    }
+  const normalized = {
+    stdout: result.stdout || "",
+    stderr: result.stderr || (result.error ? result.error.message : ""),
+    status: result.status == null ? (result.error ? 1 : 0) : result.status
+  };
+
+  if (normalized.status !== 0 && !options.allowFailure) {
     throw new GitError(
-      `git ${args.join(" ")} failed: ${error.stderr || error.stdout || error.message}`,
-      cmd,
+      `git ${args.join(" ")} failed: ${normalized.stderr || normalized.stdout}`,
+      `git ${args.join(" ")}`,
       cwd
     );
   }
+
+  return normalized;
 }
 
 /**
  * Check if a git remote branch exists.
  */
 function remoteBranchExists(cwd, remoteName, branch) {
-  try {
-    git(cwd, ["ls-remote", "--exit-code", "--heads", remoteName, branch], {
-      allowFailure: true
-    });
-    return true;
-  } catch {
-    return false;
-  }
+  const result = git(cwd, ["ls-remote", "--exit-code", "--heads", remoteName, branch], {
+    allowFailure: true
+  });
+  return result.status === 0;
 }
 
 /**
@@ -192,9 +183,6 @@ function configureLfs(cwd, files) {
     git(cwd, ["lfs", "track", "--", file]);
   }
 }
-
-// Import fs for abortInProgressOperations
-const fs = require("fs");
 
 module.exports = {
   git,

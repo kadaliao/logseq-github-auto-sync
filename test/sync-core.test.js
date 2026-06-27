@@ -12,6 +12,9 @@ assert.strictEqual(settings.branch, "master");
 assert.strictEqual(settings.agePath, "/opt/homebrew/bin/age");
 assert.deepStrictEqual(core.splitEncryptedTags(settings.encryptedTags), ["encrypted", "Private"]);
 
+const customServer = core.normalizeSettings({ syncServerUrl: "http://127.0.0.1:4096/" });
+assert.strictEqual(customServer.syncServerUrl, "http://127.0.0.1:4096/");
+
 assert.strictEqual(core.contentHasEncryptedTag("tags:: encrypted, Work", "encrypted"), true);
 assert.strictEqual(core.contentHasEncryptedTag("- tags:: [[Private]], Work", "private"), true);
 assert.strictEqual(core.contentHasEncryptedTag("- nested #encrypted note", "encrypted"), true);

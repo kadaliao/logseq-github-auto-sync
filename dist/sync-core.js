@@ -24,7 +24,8 @@
     identityPath: "~/.config/logseq-github-auto-sync/identity.txt",
     largeFileStorage: true,
     lfsThresholdMb: 50,
-    secretScanMode: "encrypted-sync-gate"
+    secretScanMode: "encrypted-sync-gate",
+    syncServerUrl: "http://127.0.0.1:31937"
   };
 
   const SECRET_PATTERNS = [
@@ -124,6 +125,7 @@
       identityPath: cleanText(merged.identityPath, DEFAULTS.identityPath),
       largeFileStorage: asBool(merged.largeFileStorage, DEFAULTS.largeFileStorage),
       lfsThresholdMb: Math.max(1, asNumber(merged.lfsThresholdMb, DEFAULTS.lfsThresholdMb)),
+      syncServerUrl: cleanText(merged.syncServerUrl, DEFAULTS.syncServerUrl),
       secretScanMode: DEFAULTS.secretScanMode
     };
   }

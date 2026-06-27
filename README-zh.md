@@ -22,10 +22,16 @@ brew install age git-lfs  # macOS
 # 或: sudo apt install age git-lfs  # Linux
 ```
 
-### 2. 克隆插件
+### 2. 安装插件
+
+从 [GitHub releases](https://github.com/kadaliao/logseq-github-auto-sync/releases) 下载 `logseq-github-auto-sync-<version>.zip`，解压后把 `logseq-github-auto-sync` 文件夹放到 `~/.logseq/plugins/`。
+
+如果要从源码本地安装：
 
 ```bash
 git clone git@github.com:kadaliao/logseq-github-auto-sync.git ~/logseq-github-auto-sync
+npm --prefix ~/logseq-github-auto-sync run package
+unzip ~/logseq-github-auto-sync/release/logseq-github-auto-sync-*.zip -d ~/.logseq/plugins
 ```
 
 ### 3. 生成加密密钥
@@ -49,17 +55,13 @@ chmod 644 ~/.config/logseq-github-auto-sync/recipients.txt
 
 ⚠️ **务必备份 `identity.txt`！切勿提交到 Git。**
 
-### 4. 安装到 Logseq
+### 4. 启动本地同步服务
 
 ```bash
-# macOS/Linux
-mkdir -p ~/.logseq/plugins
-cp -r ~/logseq-github-auto-sync/dist ~/.logseq/plugins/logseq-github-auto-sync
-cp ~/logseq-github-auto-sync/icon.svg ~/.logseq/plugins/logseq-github-auto-sync/
-cp ~/logseq-github-auto-sync/package.json ~/.logseq/plugins/logseq-github-auto-sync/
+node ~/.logseq/plugins/logseq-github-auto-sync/scripts/sync-server.js
 ```
 
-重启 Logseq → 设置 → 插件 → 启用 **GitHub Auto Sync**
+同步时保持本地服务运行。重启 Logseq → 设置 → 插件 → 启用 **GitHub Auto Sync**。
 
 ### 5. 配置插件
 

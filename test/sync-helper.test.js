@@ -14,6 +14,7 @@ function run(command, args, options = {}) {
     cwd: options.cwd || process.cwd(),
     encoding: options.encoding || "utf8",
     maxBuffer: 20 * 1024 * 1024,
+    env: Object.assign({}, process.env, options.env || {}),
   });
   if (result.status !== 0 && !options.allowFailure) {
     throw new Error(`${command} ${args.join(" ")} failed\nstdout=${result.stdout}\nstderr=${result.stderr}`);
@@ -33,8 +34,26 @@ const clone = path.join(tmp, "clone");
 const identity = path.join(tmp, "identity.txt");
 const recipients = path.join(tmp, "recipients.txt");
 const secret = `sk-${"a".repeat(28)}`;
+const realGit = run("which", ["git"]).stdout.trim();
+const gitLog = path.join(tmp, "git-wrapper.log");
+const gitWrapper = path.join(tmp, "git-wrapper.js");
 
 fs.mkdirSync(graph, { recursive: true });
+write(gitWrapper, `#!/usr/bin/env node
+const fs = require("fs");
+const { spawnSync } = require("child_process");
+fs.appendFileSync(${JSON.stringify(gitLog)}, process.argv.slice(2).join(" ") + "\\n");
+const result = spawnSync(${JSON.stringify(realGit)}, process.argv.slice(2), {
+  cwd: process.cwd(),
+  env: process.env,
+  encoding: "utf8",
+  stdio: ["ignore", "pipe", "pipe"]
+});
+if (result.stdout) process.stdout.write(result.stdout);
+if (result.stderr) process.stderr.write(result.stderr);
+process.exit(result.status == null ? 1 : result.status);
+`);
+fs.chmodSync(gitWrapper, 0o755);
 run("git", ["init"], { cwd: graph });
 run("git", ["config", "user.name", "Test User"], { cwd: graph });
 run("git", ["config", "user.email", "test@example.invalid"], { cwd: graph });
@@ -84,8 +103,17 @@ const repeatSync = run("node", [
   "--encrypted-tags", "encrypted",
   "--lfs-threshold-bytes", "64",
   "--commit-message", "test encrypted sync repeat",
-], { cwd: graph });
+], {
+  cwd: graph,
+  env: {
+    LOGSEQ_GITHUB_SYNC_GIT: gitWrapper,
+  },
+});
 assert.match(repeatSync.stdout, /sync complete/);
+assert(
+  fs.readFileSync(gitLog, "utf8").includes("pull --rebase --autostash origin master"),
+  "expected sync to pull with rebase before pushing when enabled"
+);
 
 run("git", ["clone", remote, clone]);
 const encrypted = fs.readFileSync(path.join(clone, "pages", "Secret.md"), "utf8");

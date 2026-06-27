@@ -2,7 +2,7 @@
  * Age encryption and decryption utilities.
  */
 
-const { execSync } = require("child_process");
+const { spawnSync } = require("child_process");
 const crypto = require("crypto");
 const fs = require("fs");
 
@@ -57,16 +57,19 @@ function atomicRename(src, dest) {
 function encryptFile(agePath, recipientsPath, inputFile, outputFile) {
   const tmpFile = `${outputFile}.age-tmp-${generateTempSuffix()}`;
   try {
-    const result = execSync(`${agePath} -R ${recipientsPath} -o ${tmpFile} ${inputFile}`, {
+    const result = spawnSync(agePath, ["-R", recipientsPath, "-o", tmpFile, inputFile], {
       encoding: "utf8",
-      stdio: ["pipe", "pipe", "pipe"]
+      stdio: ["ignore", "pipe", "pipe"]
     });
+    if (result.status !== 0) {
+      throw new Error(result.stderr || result.stdout || (result.error && result.error.message) || "unknown error");
+    }
 
     atomicRename(tmpFile, outputFile);
-    return { exitCode: 0, stdout: result, stderr: "" };
+    return { exitCode: 0, stdout: result.stdout || "", stderr: "" };
   } catch (error) {
     cleanupTempFiles(tmpFile);
-    throw new Error(`age encryption failed: ${error.stderr || error.stdout || error.message}`);
+    throw new Error(`age encryption failed: ${error.message}`);
   }
 }
 
@@ -82,16 +85,19 @@ function encryptFile(agePath, recipientsPath, inputFile, outputFile) {
 function decryptFile(agePath, identityPath, inputFile, outputFile) {
   const tmpFile = `${outputFile}.plain-tmp-${generateTempSuffix()}`;
   try {
-    const result = execSync(`${agePath} -d -i ${identityPath} -o ${tmpFile} ${inputFile}`, {
+    const result = spawnSync(agePath, ["-d", "-i", identityPath, "-o", tmpFile, inputFile], {
       encoding: "utf8",
-      stdio: ["pipe", "pipe", "pipe"]
+      stdio: ["ignore", "pipe", "pipe"]
     });
+    if (result.status !== 0) {
+      throw new Error(result.stderr || result.stdout || (result.error && result.error.message) || "unknown error");
+    }
 
     atomicRename(tmpFile, outputFile);
-    return { exitCode: 0, stdout: result, stderr: "" };
+    return { exitCode: 0, stdout: result.stdout || "", stderr: "" };
   } catch (error) {
     cleanupTempFiles(tmpFile);
-    throw new Error(`age decryption failed: ${error.stderr || error.stdout || error.message}`);
+    throw new Error(`age decryption failed: ${error.message}`);
   }
 }
 

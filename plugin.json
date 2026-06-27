@@ -4,7 +4,7 @@
   "version": "0.2.0",
   "description": "Encrypted GitHub sync for Logseq with age encryption and secret scanning. Sync your graph securely with automatic secret detection.",
   "author": {
-    "name": "liaoxingyi",
+    "name": "Kada Liao",
     "url": "https://github.com/kadaliao"
   },
   "main": "dist/index.html",

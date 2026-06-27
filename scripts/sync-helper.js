@@ -476,6 +476,10 @@ function commitAndPush(stagingRoot, cfg, encryptedCount, lfsCount) {
     committed = true;
   }
 
+  if (cfg.pullBeforePush && remoteBranchExists(stagingRoot, cfg)) {
+    git(stagingRoot, ["pull", "--rebase", "--autostash", cfg.remoteName, cfg.branch], { allowFailure: false });
+  }
+
   git(stagingRoot, ["push", "-u", cfg.remoteName, cfg.branch], { allowFailure: false });
   console.log(`sync complete: committed=${committed} encrypted_files=${encryptedCount} lfs_files=${lfsCount}`);
 }

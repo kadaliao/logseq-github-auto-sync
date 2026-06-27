@@ -16,32 +16,25 @@ brew install git-lfs
 git lfs install
 ```
 
-### 2. 克隆插件
+### 2. 安装插件
 
-```bash
-git clone git@github.com:kadaliao/logseq-github-auto-sync.git ~/logseq-github-auto-sync
-```
-
-### 3. 安装到 Logseq
-
-**方法 A：使用符号链接（推荐，便于更新）**
+从 [GitHub releases](https://github.com/kadaliao/logseq-github-auto-sync/releases) 下载 `logseq-github-auto-sync-<version>.zip`，然后解压到 Logseq 插件目录：
 
 ```bash
 mkdir -p ~/.logseq/plugins
-ln -sf ~/logseq-github-auto-sync/dist ~/.logseq/plugins/logseq-github-auto-sync
-ln -sf ~/logseq-github-auto-sync/icon.svg ~/.logseq/plugins/logseq-github-auto-sync/
-ln -sf ~/logseq-github-auto-sync/package.json ~/.logseq/plugins/logseq-github-auto-sync/
+unzip ~/Downloads/logseq-github-auto-sync-*.zip -d ~/.logseq/plugins
 ```
 
-**方法 B：直接复制**
+如果要从源码本地安装：
 
 ```bash
-cp -r ~/logseq-github-auto-sync/dist ~/.logseq/plugins/logseq-github-auto-sync
-cp ~/logseq-github-auto-sync/icon.svg ~/.logseq/plugins/logseq-github-auto-sync/
-cp ~/logseq-github-auto-sync/package.json ~/.logseq/plugins/logseq-github-auto-sync/
+mkdir -p ~/.logseq/plugins
+git clone git@github.com:kadaliao/logseq-github-auto-sync.git ~/logseq-github-auto-sync
+npm --prefix ~/logseq-github-auto-sync run package
+unzip ~/logseq-github-auto-sync/release/logseq-github-auto-sync-*.zip -d ~/.logseq/plugins
 ```
 
-### 4. 设置加密密钥
+### 3. 设置加密密钥
 
 ```bash
 mkdir -p ~/.config/logseq-github-auto-sync
@@ -59,6 +52,14 @@ chmod 644 ~/.config/logseq-github-auto-sync/recipients.txt
 ```
 
 **⚠️ 重要**：务必备份 `identity.txt` 到安全位置（密码管理器、加密备份）。**切勿将此文件提交到 Git。**
+
+### 4. 启动本地同步服务
+
+```bash
+node ~/.logseq/plugins/logseq-github-auto-sync/scripts/sync-server.js
+```
+
+同步时保持这个进程运行。如果图库不是当前工作目录，请设置 `LOGSEQ_GITHUB_SYNC_GRAPH=/path/to/graph`。
 
 ### 5. 重启 Logseq
 
@@ -270,12 +271,8 @@ launchctl load ~/Library/LaunchAgents/com.logseq.github-sync.plist
 ## 更新插件
 
 ```bash
-cd ~/logseq-github-auto-sync
-git pull origin main
-
-# 如果使用符号链接，无需其他操作
-# 如果使用复制，重新复制更新后的文件：
-cp -r dist/* ~/.logseq/plugins/logseq-github-auto-sync/
+rm -rf ~/.logseq/plugins/logseq-github-auto-sync
+unzip ~/Downloads/logseq-github-auto-sync-*.zip -d ~/.logseq/plugins
 ```
 
 重启 Logseq 以应用更新。

@@ -40,6 +40,13 @@ const HELPER = path.join(__dirname, "sync-helper.js");
 const NODE = process.execPath;
 const MAX_BODY = 1024 * 1024;
 const ALLOWED_COMMANDS = new Set(["sync", "scan"]);
+const ALLOWED_ORIGIN_PATTERNS = [
+  /^lsp:\/\//i,
+  /^logseq:\/\//i,
+  /^app:\/\//i,
+  /^file:\/\//i,
+  /^https?:\/\/(?:127\.0\.0\.1|localhost)(?::\d+)?$/i
+];
 
 function expandHome(value) {
   if (!value) return value;
@@ -114,10 +121,29 @@ function send(res, status, payload) {
   res.writeHead(status, {
     "Content-Type": "application/json; charset=utf-8",
     "Content-Length": Buffer.byteLength(data),
-    "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type"
   });
+  res.end(data);
+}
+
+function originAllowed(origin) {
+  if (!origin) return true;
+  return ALLOWED_ORIGIN_PATTERNS.some((pattern) => pattern.test(origin));
+}
+
+function sendCors(res, req, status, payload) {
+  const origin = req.headers.origin;
+  const data = JSON.stringify(payload);
+  const headers = {
+    "Content-Type": "application/json; charset=utf-8",
+    "Content-Length": Buffer.byteLength(data),
+    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+    "Vary": "Origin"
+  };
+  if (origin) headers["Access-Control-Allow-Origin"] = origin;
+  res.writeHead(status, headers);
   res.end(data);
 }
 
@@ -141,23 +167,26 @@ function run(command, cfg) {
 }
 
 const server = http.createServer(async (req, res) => {
-  if (req.method === "OPTIONS") return send(res, 204, {});
-  if (req.method === "GET" && req.url === "/health") {
-    return send(res, 200, { ok: true, graphRoot: GRAPH_ROOT });
+  if (!originAllowed(req.headers.origin)) {
+    return send(res, 403, { error: "origin not allowed" });
   }
-  if (req.method !== "POST") return send(res, 405, { error: "method not allowed" });
+  if (req.method === "OPTIONS") return sendCors(res, req, 204, {});
+  if (req.method === "GET" && req.url === "/health") {
+    return sendCors(res, req, 200, { ok: true, graphRoot: GRAPH_ROOT });
+  }
+  if (req.method !== "POST") return sendCors(res, req, 405, { error: "method not allowed" });
 
   const command = String(req.url || "").replace(/^\//, "");
-  if (!ALLOWED_COMMANDS.has(command)) return send(res, 404, { error: "unknown command" });
+  if (!ALLOWED_COMMANDS.has(command)) return sendCors(res, req, 404, { error: "unknown command" });
 
   try {
     const rawBody = await readBody(req);
     const body = rawBody ? JSON.parse(rawBody) : {};
     const cfg = normalizeSettings(body.settings || {});
     const result = await run(command, cfg);
-    send(res, result.exitCode === 0 ? 200 : 500, result);
+    sendCors(res, req, result.exitCode === 0 ? 200 : 500, result);
   } catch (error) {
-    send(res, 500, { exitCode: 1, stdout: "", stderr: error && error.message ? error.message : String(error) });
+    sendCors(res, req, 500, { exitCode: 1, stdout: "", stderr: error && error.message ? error.message : String(error) });
   }
 });
 

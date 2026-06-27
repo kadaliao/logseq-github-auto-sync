@@ -22,10 +22,16 @@ brew install age git-lfs  # macOS
 # or: sudo apt install age git-lfs  # Linux
 ```
 
-### 2. Clone Plugin
+### 2. Install Plugin
+
+Download `logseq-github-auto-sync-<version>.zip` from the [GitHub releases](https://github.com/kadaliao/logseq-github-auto-sync/releases), unzip it, and place the extracted `logseq-github-auto-sync` folder under `~/.logseq/plugins/`.
+
+For local development or manual installation from source:
 
 ```bash
 git clone git@github.com:kadaliao/logseq-github-auto-sync.git ~/logseq-github-auto-sync
+npm --prefix ~/logseq-github-auto-sync run package
+unzip ~/logseq-github-auto-sync/release/logseq-github-auto-sync-*.zip -d ~/.logseq/plugins
 ```
 
 ### 3. Setup Encryption Keys
@@ -46,17 +52,13 @@ chmod 644 ~/.config/logseq-github-auto-sync/recipients.txt
 
 ⚠️ **Backup `identity.txt` to a safe location! Never commit it to Git.**
 
-### 4. Install in Logseq
+### 4. Start Local Sync Server
 
 ```bash
-# macOS/Linux
-mkdir -p ~/.logseq/plugins
-cp -r ~/logseq-github-auto-sync/dist ~/.logseq/plugins/logseq-github-auto-sync
-cp ~/logseq-github-auto-sync/icon.svg ~/.logseq/plugins/logseq-github-auto-sync/
-cp ~/logseq-github-auto-sync/package.json ~/.logseq/plugins/logseq-github-auto-sync/
+node ~/.logseq/plugins/logseq-github-auto-sync/scripts/sync-server.js
 ```
 
-Restart Logseq → Settings → Plugins → Enable **GitHub Auto Sync**
+Keep the local server running while syncing. Restart Logseq → Settings → Plugins → Enable **GitHub Auto Sync**.
 
 ### 5. Configure
 

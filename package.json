@@ -25,7 +25,8 @@
     "backup"
   ],
   "scripts": {
-    "test": "node test/sync-core.test.js && node test/sync-helper.test.js && node test/main-plugin-root.test.js && node test/performance.test.js",
+    "test": "node test/sync-core.test.js && node test/src-modules.test.js && node test/package-plugin.test.js && node test/sync-server.test.js && node test/sync-helper.test.js && node test/main-plugin-root.test.js && node test/performance.test.js",
+    "package": "node scripts/package-plugin.js",
     "server": "node scripts/sync-server.js",
     "server:dev": "LOGSEQ_GITHUB_SYNC_GRAPH=$(pwd) node scripts/sync-server.js",
     "scan": "node scripts/sync-helper.js scan",
@@ -39,4 +40,3 @@
     "createdAt": 1716355200000
   }
 }
-

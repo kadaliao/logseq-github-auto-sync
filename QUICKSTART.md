@@ -16,30 +16,25 @@ brew install git-lfs
 git lfs install
 ```
 
-### 2. Clone the Plugin
+### 2. Install the Plugin
+
+Download `logseq-github-auto-sync-<version>.zip` from the [GitHub releases](https://github.com/kadaliao/logseq-github-auto-sync/releases), then unzip it into Logseq's plugin directory:
 
 ```bash
-git clone git@github.com:kadaliao/logseq-github-auto-sync.git ~/logseq-github-auto-sync
-```
-
-### 3. Install in Logseq
-
-```bash
-# Create symlink (recommended for easy updates)
 mkdir -p ~/.logseq/plugins
-ln -sf ~/logseq-github-auto-sync/dist ~/.logseq/plugins/logseq-github-auto-sync
-ln -sf ~/logseq-github-auto-sync/icon.svg ~/.logseq/plugins/logseq-github-auto-sync/
-ln -sf ~/logseq-github-auto-sync/package.json ~/.logseq/plugins/logseq-github-auto-sync/
+unzip ~/Downloads/logseq-github-auto-sync-*.zip -d ~/.logseq/plugins
 ```
 
-Or copy directly:
+For local development or manual installation from source:
+
 ```bash
-cp -r ~/logseq-github-auto-sync/dist ~/.logseq/plugins/logseq-github-auto-sync
-cp ~/logseq-github-auto-sync/icon.svg ~/.logseq/plugins/logseq-github-auto-sync/
-cp ~/logseq-github-auto-sync/package.json ~/.logseq/plugins/logseq-github-auto-sync/
+mkdir -p ~/.logseq/plugins
+git clone git@github.com:kadaliao/logseq-github-auto-sync.git ~/logseq-github-auto-sync
+npm --prefix ~/logseq-github-auto-sync run package
+unzip ~/logseq-github-auto-sync/release/logseq-github-auto-sync-*.zip -d ~/.logseq/plugins
 ```
 
-### 4. Setup Encryption Keys
+### 3. Setup Encryption Keys
 
 ```bash
 mkdir -p ~/.config/logseq-github-auto-sync
@@ -57,6 +52,14 @@ chmod 644 ~/.config/logseq-github-auto-sync/recipients.txt
 ```
 
 **⚠️ Important**: Backup `identity.txt` to a safe location (password manager, encrypted backup). **Never commit this file to Git.**
+
+### 4. Start the Local Sync Server
+
+```bash
+node ~/.logseq/plugins/logseq-github-auto-sync/scripts/sync-server.js
+```
+
+Keep this process running while Logseq syncs. If your graph is not the current working directory, set `LOGSEQ_GITHUB_SYNC_GRAPH=/path/to/graph`.
 
 ### 5. Restart Logseq
 
@@ -268,12 +271,8 @@ launchctl load ~/Library/LaunchAgents/com.logseq.github-sync.plist
 ## Updating
 
 ```bash
-cd ~/logseq-github-auto-sync
-git pull origin main
-
-# If using symlinks, nothing else needed
-# If using cp, copy the updated files again:
-cp -r dist/* ~/.logseq/plugins/logseq-github-auto-sync/
+rm -rf ~/.logseq/plugins/logseq-github-auto-sync
+unzip ~/Downloads/logseq-github-auto-sync-*.zip -d ~/.logseq/plugins
 ```
 
 Restart Logseq to apply updates.

@@ -2,6 +2,7 @@
  * File system utilities for walking and filtering files.
  */
 
+const { spawnSync } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 
@@ -159,10 +160,13 @@ function copyGraphToStaging(graphRoot, stagingRoot, excludedPaths = [".git", ".l
     `${stagingRoot.replace(/\/$/, "")}/`
   ];
 
-  try {
-    require("child_process").execSync("rsync", { args, stdio: "pipe" });
-  } catch (error) {
-    throw new Error(`rsync failed: ${error.stderr || error.stdout || error.message}`);
+  const result = spawnSync("rsync", args, {
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"]
+  });
+  if (result.status !== 0) {
+    const output = result.stderr || result.stdout || (result.error && result.error.message) || "unknown error";
+    throw new Error(`rsync failed: ${output}`);
   }
 }
 
