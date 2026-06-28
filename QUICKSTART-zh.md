@@ -98,7 +98,7 @@ GitHub Auto Sync: encrypted sync now
 
 同步会立刻显示开始提示。默认完成弹窗保持简短；需要排查时，在设置中打开 **Show detailed sync logs**，弹窗会显示命令输出。
 
-工具栏里还提供 🕘 查看最近同步历史，⚙ 打开插件设置。
+工具栏只保留一个 🔒 入口。点击后会打开状态面板，里面包含当前同步状态、原始图库 Git 状态、最近历史、同步按钮和设置入口。
 
 ### 自动同步
 
@@ -143,7 +143,9 @@ GitHub Auto Sync: show last sync log
 GitHub Auto Sync: show recent sync history
 ```
 
-显示最近一次同步结果和已脱敏的 helper 输出。最近同步历史会列出本次 Logseq 会话中的最近几次同步尝试。
+显示最近一次同步结果和已脱敏的 helper 输出。最近同步历史会列出本次 Logseq 会话中的最近几次同步尝试，并用 ✅ 表示成功、⚠ 表示警告、❌ 表示失败。
+
+GitHub staging sync 和原始图库自己的 Git 状态是分开的。如果原始图库 Git 工作区还有本地变化，即使 GitHub staging sync 已完成，状态面板也会显示警告。
 
 ## 故障排查
 

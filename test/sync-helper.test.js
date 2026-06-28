@@ -82,6 +82,7 @@ const sync = run("node", [
   "--commit-message", "test encrypted sync",
 ], { cwd: graph });
 assert.match(sync.stdout, /sync complete/);
+assert.match(sync.stdout, /source graph git status: clean/);
 
 const other = path.join(tmp, "other-writer");
 run("git", ["clone", remote, other]);
@@ -110,6 +111,7 @@ const repeatSync = run("node", [
   },
 });
 assert.match(repeatSync.stdout, /sync complete/);
+assert.match(repeatSync.stdout, /source graph git status: dirty/);
 assert(
   fs.readFileSync(gitLog, "utf8").includes("pull --rebase --autostash origin master"),
   "expected sync to pull with rebase before pushing when enabled"

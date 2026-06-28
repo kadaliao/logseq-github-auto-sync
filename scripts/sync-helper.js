@@ -221,6 +221,39 @@ function gitConfigOrDefault(repoRoot, key, fallback) {
   return fallback;
 }
 
+function sourceGraphGitStatus(graphRoot) {
+  const inside = git(graphRoot, ["rev-parse", "--is-inside-work-tree"], { allowFailure: true });
+  if (inside.status !== 0 || inside.stdout.trim() !== "true") {
+    return "source graph git status: unavailable not_git_repo=true";
+  }
+
+  const status = git(graphRoot, ["status", "--porcelain=v1", "--untracked-files=all"], { allowFailure: true });
+  if (status.status !== 0) {
+    return "source graph git status: unavailable git_status_failed=true";
+  }
+
+  const lines = status.stdout
+    .split(/\r?\n/)
+    .filter(Boolean)
+    .filter((line) => !line.slice(3).startsWith(`${STATE_DIR}/`));
+  if (lines.length === 0) return "source graph git status: clean";
+
+  let tracked = 0;
+  let untracked = 0;
+  let deleted = 0;
+  for (const line of lines) {
+    const code = line.slice(0, 2);
+    if (code === "??") {
+      untracked += 1;
+      continue;
+    }
+    tracked += 1;
+    if (code.includes("D")) deleted += 1;
+  }
+
+  return `source graph git status: dirty tracked_changes=${tracked} untracked=${untracked} deleted=${deleted}`;
+}
+
 function resolveCommitAuthorName(cfg, graphRoot) {
   return cfg.authorName || gitConfigOrDefault(graphRoot, "user.name", DEFAULT_AUTHOR_NAME);
 }
@@ -502,6 +535,7 @@ function commandSync(cfg) {
   ensureFile(cfg.recipientsPath, "age recipients file");
 
   const graphRoot = getGraphRoot();
+  const sourceStatus = sourceGraphGitStatus(graphRoot);
   const stateRoot = path.join(graphRoot, STATE_DIR);
   const stagingRoot = path.join(stateRoot, STAGING_DIR);
   ensureDir(stateRoot);
@@ -517,11 +551,13 @@ function commandSync(cfg) {
   }
 
   const lfsFiles = configureLargeFileStorage(stagingRoot, cfg);
+  console.log(sourceStatus);
   commitAndPush(stagingRoot, cfg, encrypted.length + encryptedAssets.length, lfsFiles.length);
 }
 
 function commandScan(cfg) {
   const graphRoot = getGraphRoot();
+  console.log(sourceGraphGitStatus(graphRoot));
   console.log(`commit author: ${resolveCommitAuthorName(cfg, graphRoot)} <${resolveCommitAuthorEmail(cfg, graphRoot)}>`);
   const tagged = scanTaggedFiles(graphRoot, cfg.encryptedTags);
   const hits = scanLikelySecrets(graphRoot, {

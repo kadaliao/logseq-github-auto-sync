@@ -7,6 +7,11 @@
   let lastStatus = "Not synced yet";
   let lastLog = "No sync log yet.";
   const syncHistory = [];
+  const panelKey = "github-auto-sync-panel";
+  let statusPanel = {
+    sync: { icon: "⚪", label: "Not synced yet", detail: "No sync attempt in this Logseq session yet." },
+    source: { icon: "⚪", label: "Source graph Git", detail: "Unknown until the helper runs." }
+  };
 
   // Safe API wrapper with feature detection
   const api = {
@@ -188,9 +193,33 @@
   function syncSummary(result) {
     const output = cleanOutput(result);
     const match = output.match(/sync complete: committed=(\w+) encrypted_files=(\d+) lfs_files=(\d+)/);
-    if (!match) return "Encrypted GitHub sync complete.";
+    if (!match) return "GitHub staging sync complete.";
     const committed = match[1] === "true" ? "committed changes" : "no changes to commit";
-    return `Encrypted GitHub sync complete: ${committed}, encrypted ${match[2]} file(s), LFS ${match[3]} file(s).`;
+    return `GitHub staging sync complete: ${committed}, encrypted ${match[2]} file(s), LFS ${match[3]} file(s).`;
+  }
+
+  function sourceGraphStatus(result) {
+    const output = cleanOutput(result);
+    const match = output.match(/source graph git status: ([^\n]+)/);
+    if (!match) {
+      return { state: "unknown", icon: "⚪", label: "Source graph Git", detail: "Not reported by helper." };
+    }
+    const value = match[1].trim();
+    if (value === "clean") {
+      return { state: "clean", icon: "✅", label: "Source graph Git clean", detail: "The original graph Git working tree is clean." };
+    }
+    if (value.startsWith("dirty")) {
+      const tracked = (value.match(/tracked_changes=(\d+)/) || [])[1] || "0";
+      const untracked = (value.match(/untracked=(\d+)/) || [])[1] || "0";
+      const deleted = (value.match(/deleted=(\d+)/) || [])[1] || "0";
+      return {
+        state: "dirty",
+        icon: "⚠",
+        label: "Source graph Git still has local changes",
+        detail: `${tracked} tracked, ${untracked} untracked, ${deleted} deleted. GitHub staging sync can still be complete.`
+      };
+    }
+    return { state: "unknown", icon: "⚠", label: "Source graph Git status unavailable", detail: value };
   }
 
   function rememberLog(status, result) {
@@ -203,15 +232,92 @@
     if (syncHistory.length > 10) syncHistory.length = 10;
   }
 
-  function showHistory() {
-    if (syncHistory.length === 0) {
-      notify("Recent GitHub Auto Sync history\nNo sync attempts in this Logseq session yet.", "info");
-      return;
+  function escapeHtml(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function historyIcon(status) {
+    if (status === "success") return "✅";
+    if (status === "warning") return "⚠";
+    if (status === "failed") return "❌";
+    return "•";
+  }
+
+  function panelActionsHtml() {
+    return [
+      '<button data-on-click="githubAutoSyncNow" class="github-auto-sync-menu-button primary">Sync now</button>',
+      '<button data-on-click="githubAutoSyncShowHistory" class="github-auto-sync-menu-button">Recent history</button>',
+      '<button data-on-click="githubAutoSyncSettings" class="github-auto-sync-menu-button">Open settings</button>',
+      '<button data-on-click="githubAutoSyncClosePanel" class="github-auto-sync-menu-button ghost">Close</button>'
+    ].join("");
+  }
+
+  function historyHtml(limit) {
+    const items = syncHistory.slice(0, limit || 5);
+    if (items.length === 0) {
+      return '<div class="github-auto-sync-empty">No sync attempts in this Logseq session yet.</div>';
     }
-    const lines = syncHistory.map((item, index) =>
-      `${index + 1}. ${item.time} - ${item.trigger} - ${item.status}${item.summary ? ` - ${item.summary}` : ""}`
-    );
-    notify(`Recent GitHub Auto Sync history\n${lines.join("\n")}`, "info");
+    return items.map((item) =>
+      `<div class="github-auto-sync-history-row ${escapeHtml(item.status)}">` +
+      `<span class="github-auto-sync-history-icon">${historyIcon(item.status)}</span>` +
+      '<span class="github-auto-sync-history-body">' +
+      `<strong>${escapeHtml(item.time)} · ${escapeHtml(item.trigger)}</strong>` +
+      `<small>${escapeHtml(item.summary || item.status)}</small>` +
+      "</span>" +
+      "</div>"
+    ).join("");
+  }
+
+  function renderPanel(title, options) {
+    const opts = Object.assign({ historyLimit: 4, historyOnly: false }, options || {});
+    const body = opts.historyOnly
+      ? `<section><h2>Recent GitHub Auto Sync history</h2>${historyHtml(10)}</section>`
+      : [
+        '<section><h2>Current status</h2>',
+        '<div class="github-auto-sync-status-grid">',
+        '<div class="github-auto-sync-status-card">',
+        `<span>${escapeHtml(statusPanel.sync.icon)}</span><strong>${escapeHtml(statusPanel.sync.label)}</strong>`,
+        `<small>${escapeHtml(statusPanel.sync.detail)}</small>`,
+        '</div>',
+        '<div class="github-auto-sync-status-card">',
+        `<span>${escapeHtml(statusPanel.source.icon)}</span><strong>${escapeHtml(statusPanel.source.label)}</strong>`,
+        `<small>${escapeHtml(statusPanel.source.detail)}</small>`,
+        '</div>',
+        '</div></section>',
+        `<section><h2>Recent history</h2>${historyHtml(opts.historyLimit)}</section>`
+      ].join("");
+
+    const template =
+      '<main class="github-auto-sync-panel">' +
+      `<header><h1>${escapeHtml(title || "GitHub Auto Sync")}</h1><button data-on-click="githubAutoSyncClosePanel" aria-label="Close">×</button></header>` +
+      body +
+      `<footer>${panelActionsHtml()}</footer>` +
+      '</main>';
+
+    if (typeof logseq.provideUI === "function") logseq.provideUI({ key: panelKey, template });
+    if (typeof logseq.setMainUIInlineStyle === "function") {
+      logseq.setMainUIInlineStyle({
+        position: "fixed",
+        top: "52px",
+        right: "18px",
+        width: "420px",
+        maxWidth: "calc(100vw - 24px)",
+        zIndex: 9999
+      });
+    }
+    if (typeof logseq.showMainUI === "function") logseq.showMainUI({ autoFocus: false });
+  }
+
+  function showHistory() {
+    renderPanel("GitHub Auto Sync", { historyOnly: true });
+  }
+
+  function showMenu() {
+    renderPanel("GitHub Auto Sync");
   }
 
   async function runHelper(command, cfg, options) {
@@ -254,16 +360,32 @@
   async function syncNow(trigger) {
     if (syncPromise) {
       notify("GitHub Auto Sync is already running.", "warning");
+      rememberHistory({
+        time: new Date().toLocaleString(),
+        trigger: trigger || "manual",
+        status: "warning",
+        summary: "GitHub Auto Sync is already running."
+      });
+      statusPanel.sync = { icon: "⚠", label: "Sync already running", detail: "Wait for the current helper run to finish." };
+      showMenu();
       return;
     }
 
     const cfg = settings();
     if (!cfg.encryptedSync) {
-      notify("Plain direct push is disabled for safety. Keep encryptedSync enabled.", "error");
+      const summary = "Plain direct push is disabled for safety. Keep encryptedSync enabled.";
+      notify(summary, "error");
+      rememberHistory({ time: new Date().toLocaleString(), trigger: trigger || "manual", status: "failed", summary });
+      statusPanel.sync = { icon: "❌", label: "Sync blocked", detail: summary };
+      showMenu();
       return;
     }
     if (!cfg.repoUrl) {
-      notify("Set GitHub repo URL in GitHub Auto Sync settings before syncing.", "warning");
+      const summary = "Set GitHub repo URL in GitHub Auto Sync settings before syncing.";
+      notify(summary, "warning");
+      rememberHistory({ time: new Date().toLocaleString(), trigger: trigger || "manual", status: "warning", summary });
+      statusPanel.sync = { icon: "⚠", label: "Sync needs configuration", detail: summary };
+      showMenu();
       api.showSettings();
       return;
     }
@@ -275,16 +397,31 @@
         lastStatus = `Last encrypted sync: ${new Date().toLocaleString()} (${trigger || "manual"})`;
         rememberLog(lastStatus, result);
         const output = cleanOutput(result);
+        const sourceStatus = sourceGraphStatus(result);
+        const isWarning = sourceStatus.state === "dirty" || sourceStatus.state === "unknown";
+        const summary = isWarning ? `${sourceStatus.label}: ${sourceStatus.detail}` : syncSummary(result);
+        statusPanel.sync = {
+          icon: "✅",
+          label: "GitHub staging sync complete",
+          detail: syncSummary(result)
+        };
+        statusPanel.source = sourceStatus;
         rememberHistory({
           time: new Date().toLocaleString(),
           trigger: trigger || "manual",
-          status: "success",
-          summary: syncSummary(result)
+          status: isWarning ? "warning" : "success",
+          summary
         });
-        notify(cfg.showDetailedLogs && output ? `${syncSummary(result)}\n${output}` : syncSummary(result), "success");
+        notify(cfg.showDetailedLogs && output ? `${syncSummary(result)}\n${output}` : syncSummary(result), isWarning ? "warning" : "success");
+        showMenu();
       } catch (error) {
         lastStatus = `Last encrypted sync failed: ${new Date().toLocaleString()}`;
         lastLog = `${lastStatus}\n${core.redactGitOutput(error && error.message ? error.message : error)}`.slice(0, 4000);
+        statusPanel.sync = {
+          icon: "❌",
+          label: "GitHub staging sync failed",
+          detail: core.redactGitOutput(error && error.message ? error.message : error).slice(0, 180)
+        };
         rememberHistory({
           time: new Date().toLocaleString(),
           trigger: trigger || "manual",
@@ -292,6 +429,7 @@
           summary: core.redactGitOutput(error && error.message ? error.message : error).slice(0, 180)
         });
         notify(lastLog, "error");
+        showMenu();
         throw error;
       } finally {
         syncPromise = null;
@@ -309,6 +447,13 @@
     const cfg = settings();
     const result = await runHelper("scan", cfg, { allowFailure: true });
     const output = core.redactGitOutput(result.stdout || result.stderr || "No status output.").trim();
+    statusPanel.source = sourceGraphStatus(result);
+    statusPanel.sync = {
+      icon: result.exitCode === 0 ? "✅" : "⚠",
+      label: result.exitCode === 0 ? "Encryption scan complete" : "Encryption scan needs attention",
+      detail: output.slice(0, 240)
+    };
+    renderPanel("GitHub Auto Sync");
     notify(`${lastStatus}\n${output.slice(0, 900)}`, result.exitCode === 0 ? "success" : "warning");
   }
 
@@ -337,28 +482,129 @@
       githubAutoSyncNow() {
         syncNow("toolbar").catch((error) => console.error(error));
       },
+      githubAutoSyncMenu() {
+        showMenu();
+      },
       githubAutoSyncSettings() {
         if (typeof logseq.showSettingsUI === "function") logseq.showSettingsUI();
       },
       githubAutoSyncHistory() {
         showHistory();
+      },
+      githubAutoSyncShowHistory() {
+        showHistory();
+      },
+      githubAutoSyncClosePanel() {
+        if (typeof logseq.hideMainUI === "function") logseq.hideMainUI({ restoreEditingCursor: true });
       }
     });
+
+    if (typeof logseq.provideStyle === "function") {
+      logseq.provideStyle({
+        key: "github-auto-sync-ui",
+        style: `
+          .github-auto-sync-panel {
+            box-sizing: border-box;
+            width: 100%;
+            max-height: calc(100vh - 76px);
+            overflow: auto;
+            border: 1px solid var(--ls-border-color, rgba(120, 120, 120, .25));
+            border-radius: 8px;
+            background: var(--ls-primary-background-color, #fff);
+            color: var(--ls-primary-text-color, #222);
+            box-shadow: 0 14px 34px rgba(0, 0, 0, .18);
+            padding: 12px;
+            font-size: 13px;
+          }
+          .github-auto-sync-panel header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 10px;
+          }
+          .github-auto-sync-panel h1,
+          .github-auto-sync-panel h2 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 650;
+          }
+          .github-auto-sync-panel h2 {
+            margin-bottom: 8px;
+            color: var(--ls-secondary-text-color, #5a5a5a);
+          }
+          .github-auto-sync-panel header button {
+            border: 0;
+            background: transparent;
+            color: inherit;
+            font-size: 20px;
+            cursor: pointer;
+          }
+          .github-auto-sync-panel section {
+            margin: 10px 0;
+          }
+          .github-auto-sync-status-grid {
+            display: grid;
+            gap: 8px;
+          }
+          .github-auto-sync-status-card,
+          .github-auto-sync-history-row {
+            display: grid;
+            grid-template-columns: 24px 1fr;
+            gap: 8px;
+            align-items: start;
+            border: 1px solid var(--ls-border-color, rgba(120, 120, 120, .2));
+            border-radius: 8px;
+            padding: 8px;
+          }
+          .github-auto-sync-status-card strong,
+          .github-auto-sync-history-row strong {
+            display: block;
+            line-height: 1.35;
+          }
+          .github-auto-sync-status-card small,
+          .github-auto-sync-history-row small,
+          .github-auto-sync-empty {
+            display: block;
+            margin-top: 2px;
+            color: var(--ls-secondary-text-color, #666);
+            line-height: 1.35;
+          }
+          .github-auto-sync-history-row {
+            margin-bottom: 6px;
+          }
+          .github-auto-sync-panel footer {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 12px;
+          }
+          .github-auto-sync-menu-button {
+            border: 1px solid var(--ls-border-color, rgba(120, 120, 120, .3));
+            border-radius: 6px;
+            background: var(--ls-secondary-background-color, #f5f5f5);
+            color: inherit;
+            padding: 6px 9px;
+            cursor: pointer;
+          }
+          .github-auto-sync-menu-button.primary {
+            background: var(--ls-link-text-color, #2563eb);
+            border-color: var(--ls-link-text-color, #2563eb);
+            color: #fff;
+          }
+          .github-auto-sync-menu-button.ghost {
+            margin-left: auto;
+          }
+        `
+      });
+    }
 
     logseq.App.registerUIItem("toolbar", {
       key: "github-auto-sync",
       template:
-        '<div class="github-auto-sync-toolbar" style="display: inline-flex; align-items: center; gap: 2px">' +
-        '<a class="button" data-on-click="githubAutoSyncNow" title="GitHub Auto Sync: encrypted sync now">' +
+        '<a class="button" data-on-click="githubAutoSyncMenu" title="GitHub Auto Sync: status and actions">' +
         '<span class="github-auto-sync-icon" style="font-size: 17px; line-height: 1">🔒</span>' +
-        "</a>" +
-        '<a class="button" data-on-click="githubAutoSyncHistory" title="GitHub Auto Sync: recent sync history">' +
-        '<span class="github-auto-sync-icon" style="font-size: 15px; line-height: 1">🕘</span>' +
-        "</a>" +
-        '<a class="button" data-on-click="githubAutoSyncSettings" title="GitHub Auto Sync: open settings">' +
-        '<span class="github-auto-sync-icon" style="font-size: 15px; line-height: 1">⚙</span>' +
-        "</a>" +
-        "</div>"
+        "</a>"
     });
 
     logseq.App.registerCommandPalette(

@@ -98,7 +98,7 @@ GitHub Auto Sync: encrypted sync now
 
 Sync shows a start notification immediately. By default, completion popups stay short; enable **Show detailed sync logs** in settings when you want command output in the popup.
 
-The toolbar also has 🕘 for recent sync history and ⚙ for plugin settings.
+The toolbar has one 🔒 entry. Click it to open the status panel with current sync state, source graph Git state, recent history, sync action, and settings.
 
 ### Auto Sync
 
@@ -143,7 +143,9 @@ GitHub Auto Sync: show last sync log
 GitHub Auto Sync: show recent sync history
 ```
 
-Shows the most recent sync result with redacted helper output. Recent history lists the latest sync attempts from this Logseq session.
+Shows the most recent sync result with redacted helper output. Recent history lists the latest sync attempts from this Logseq session with ✅ success, ⚠ warning, and ❌ failure states.
+
+GitHub staging sync and the original graph's own Git status are separate. If the graph Git working tree still has local changes, the panel shows a warning even when the GitHub staging sync completed.
 
 ## Troubleshooting
 

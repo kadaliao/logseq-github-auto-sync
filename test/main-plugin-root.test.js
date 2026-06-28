@@ -11,16 +11,24 @@ function createContext(overrides = {}) {
   const messages = [];
   const commands = [];
   const uiItems = [];
+  const providedUis = [];
+  const styles = [];
   let readyPromise;
+  let mainUIVisible = false;
   const ctx = {
     console,
     URL,
     fetch: async (url, options) => {
       fetchCalls.push({ url, options });
+      const result = overrides.fetchResult || {
+        exitCode: 0,
+        stdout: "source graph git status: clean\nsync complete: committed=true encrypted_files=1 lfs_files=0",
+        stderr: ""
+      };
       return {
-        ok: true,
+        ok: result.exitCode === 0,
         async text() {
-          return JSON.stringify({ exitCode: 0, stdout: "raw helper stdout with branch detail", stderr: "" });
+          return JSON.stringify(result);
         }
       };
     },
@@ -63,6 +71,24 @@ function createContext(overrides = {}) {
       provideModel(model) {
         this.model = model;
       },
+      provideUI(ui) {
+        providedUis.push(ui);
+      },
+      provideStyle(style) {
+        styles.push(style);
+      },
+      setMainUIInlineStyle(style) {
+        this.mainUIStyle = style;
+      },
+      showMainUI() {
+        mainUIVisible = true;
+      },
+      hideMainUI() {
+        mainUIVisible = false;
+      },
+      showSettingsUI() {
+        this.settingsVisible = true;
+      },
       useSettingsSchema(schema) {
         this.settingsSchema = schema;
       },
@@ -77,17 +103,37 @@ function createContext(overrides = {}) {
   vm.createContext(ctx);
   vm.runInContext(coreCode, ctx);
   vm.runInContext(mainCode, ctx);
-  return { context: ctx, fetchCalls, messages, commands, uiItems, get readyPromise() { return readyPromise; } };
+  return {
+    context: ctx,
+    fetchCalls,
+    messages,
+    commands,
+    uiItems,
+    providedUis,
+    styles,
+    get mainUIVisible() { return mainUIVisible; },
+    get readyPromise() { return readyPromise; }
+  };
 }
 
 (async () => {
-  const { context, fetchCalls, messages, commands, uiItems, readyPromise } = createContext();
+  const { context, fetchCalls, messages, commands, uiItems, providedUis, styles, readyPromise } = createContext();
   await readyPromise;
+  assert(styles.some((item) => item.key === "github-auto-sync-ui"), "expected plugin UI styles");
   const toolbar = uiItems.find((item) => item.type === "toolbar" && item.item.key === "github-auto-sync");
   assert(toolbar, "expected toolbar item");
-  assert(toolbar.item.template.includes("githubAutoSyncNow"), "expected toolbar sync action");
-  assert(toolbar.item.template.includes("githubAutoSyncHistory"), "expected toolbar history action");
-  assert(toolbar.item.template.includes("githubAutoSyncSettings"), "expected toolbar settings action");
+  assert(toolbar.item.template.includes("githubAutoSyncMenu"), "expected toolbar menu action");
+  assert(!toolbar.item.template.includes("githubAutoSyncHistory"), "toolbar should not expose history as a second icon");
+  assert(!toolbar.item.template.includes("githubAutoSyncSettings"), "toolbar should not expose settings as a third icon");
+  assert.strictEqual((toolbar.item.template.match(/data-on-click/g) || []).length, 1, "toolbar should expose one clickable icon");
+
+  context.logseq.model.githubAutoSyncMenu();
+  assert.strictEqual(providedUis.length, 1, "expected toolbar click to render a menu");
+  assert(providedUis[0].template.includes("Current status"), "expected menu to show current sync status");
+  assert(providedUis[0].template.includes("Source graph Git"), "expected menu to separate source graph Git status");
+  assert(providedUis[0].template.includes("Sync now"), "expected menu sync action");
+  assert(providedUis[0].template.includes("Recent history"), "expected menu history action");
+  assert(providedUis[0].template.includes("Open settings"), "expected menu settings action");
 
   context.logseq.model.githubAutoSyncNow();
   await new Promise((resolve) => setTimeout(resolve, 20));
@@ -99,8 +145,8 @@ function createContext(overrides = {}) {
   assert.strictEqual(body.settings.authorName, "");
   assert.strictEqual(body.settings.authorEmail, "");
   assert(messages.some((item) => item.message.includes("Sync started")), "expected start status message");
-  assert(messages.some((item) => item.message.includes("Encrypted GitHub sync complete")), "expected completion summary");
-  assert(!messages.some((item) => item.message.includes("raw helper stdout")), "expected detailed stdout to be hidden by default");
+  assert(messages.some((item) => item.message.includes("GitHub staging sync complete")), "expected completion summary");
+  assert(!messages.some((item) => item.message.includes("source graph git status")), "expected detailed stdout to be hidden by default");
   assert(commands.some((item) => item.command.key === "github-auto-sync-last-log"), "expected last log command");
   assert(commands.some((item) => item.command.key === "github-auto-sync-history"), "expected sync history command");
   assert(context.logseq.settingsSchema.some((item) => item.key === "authorName"), "expected author name setting");
@@ -110,15 +156,35 @@ function createContext(overrides = {}) {
   const lastLogCommand = commands.find((item) => item.command.key === "github-auto-sync-last-log");
   lastLogCommand.handler();
   assert(
-    messages.some((item) => item.message.includes("raw helper stdout")),
+    messages.some((item) => item.message.includes("source graph git status")),
     "expected last sync log command to show cached helper output"
   );
 
   const historyCommand = commands.find((item) => item.command.key === "github-auto-sync-history");
   historyCommand.handler();
   assert(
-    messages.some((item) => item.message.includes("Recent GitHub Auto Sync history") && item.message.includes("toolbar")),
-    "expected sync history command to show recent sync entries"
+    providedUis.some((item) => item.template.includes("Recent GitHub Auto Sync history") && item.template.includes("✅") && item.template.includes("toolbar")),
+    "expected sync history panel to show successful recent sync entries"
+  );
+
+  const dirty = createContext({
+    fetchResult: {
+      exitCode: 0,
+      stdout: "source graph git status: dirty tracked_changes=3 untracked=2 deleted=1\nsync complete: committed=true encrypted_files=1 lfs_files=0",
+      stderr: ""
+    }
+  });
+  await dirty.readyPromise;
+  dirty.context.logseq.model.githubAutoSyncNow();
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  dirty.context.logseq.model.githubAutoSyncHistory();
+  assert(
+    dirty.providedUis.some((item) =>
+      item.template.includes("Recent GitHub Auto Sync history") &&
+      item.template.includes("⚠") &&
+      item.template.includes("Source graph Git still has local changes")
+    ),
+    "expected dirty source graph Git to be recorded as a warning"
   );
 
   const authored = createContext({
@@ -139,8 +205,18 @@ function createContext(overrides = {}) {
   detailed.context.logseq.model.githubAutoSyncNow();
   await new Promise((resolve) => setTimeout(resolve, 20));
   assert(
-    detailed.messages.some((item) => item.message.includes("raw helper stdout")),
+    detailed.messages.some((item) => item.message.includes("source graph git status")),
     "expected detailed stdout when detailed logs are enabled"
+  );
+
+  const warning = createContext({ settings: { repoUrl: "" } });
+  await warning.readyPromise;
+  warning.context.logseq.model.githubAutoSyncNow();
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  warning.context.logseq.model.githubAutoSyncHistory();
+  assert(
+    warning.providedUis.some((item) => item.template.includes("Recent GitHub Auto Sync history") && item.template.includes("⚠") && item.template.includes("GitHub repo URL")),
+    "expected sync history panel to distinguish warning entries"
   );
 
   console.log("main plugin root tests passed");

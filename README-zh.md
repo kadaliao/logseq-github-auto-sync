@@ -90,7 +90,7 @@ GitHub Auto Sync: encrypted sync now
 
 加密后的笔记会保存为 ASCII armored age 文本，因此 GitHub 会把加密的 `.md` 当作文本密文展示，而不是二进制文件。
 
-工具栏里还会显示 🕘 查看最近同步历史，⚙ 打开插件设置。
+工具栏只保留一个 🔒 入口。点击后会打开状态面板，里面显示当前同步状态、原始图库 Git 状态、最近历史、同步按钮和设置入口。
 
 插件会立刻显示开始提示，并在 helper 完成后显示同步摘要。排查问题时可以使用：
 
@@ -99,6 +99,8 @@ GitHub Auto Sync: show last sync log
 GitHub Auto Sync: show recent sync history
 GitHub Auto Sync: show encryption status
 ```
+
+状态面板会区分 **GitHub staging sync** 和原始图库自己的 Git 工作区。同步可以成功推送到 GitHub，但原始图库 Git 仍有未提交文件；这种情况会显示为警告，而不是普通成功。
 
 ## 插件设置
 

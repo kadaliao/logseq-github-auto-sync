@@ -87,7 +87,7 @@ GitHub Auto Sync: encrypted sync now
 
 Encrypted notes are stored as ASCII-armored age text, so GitHub can render the encrypted `.md` files as text instead of binary blobs.
 
-The toolbar also includes 🕘 for recent sync history and ⚙ for plugin settings.
+The toolbar uses one 🔒 entry. Click it to open a status panel with current sync state, source graph Git state, recent history, sync action, and settings.
 
 The plugin shows a start notification immediately and a completion summary when the helper finishes. For troubleshooting, use:
 
@@ -96,6 +96,8 @@ GitHub Auto Sync: show last sync log
 GitHub Auto Sync: show recent sync history
 GitHub Auto Sync: show encryption status
 ```
+
+The panel separates **GitHub staging sync** from the original graph's own Git working tree. A sync can finish successfully while the source graph Git still has local uncommitted files; that state is shown as a warning instead of a plain success.
 
 ## Settings
 
