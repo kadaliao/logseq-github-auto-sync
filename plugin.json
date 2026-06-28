@@ -1,7 +1,7 @@
 {
   "id": "logseq-github-auto-sync",
   "name": "GitHub Auto Sync",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Encrypted GitHub sync for Logseq with age encryption and secret scanning. Sync your graph securely with automatic secret detection.",
   "author": {
     "name": "Kada Liao",

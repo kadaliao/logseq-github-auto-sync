@@ -22,9 +22,9 @@ function run(command, args, options = {}) {
 
 try {
   const result = run("node", ["scripts/package-plugin.js", "--out", outDir]);
-  assert.match(result.stdout, /created .+logseq-github-auto-sync-0\.2\.0\.zip/);
+  assert.match(result.stdout, /created .+logseq-github-auto-sync-0\.2\.1\.zip/);
 
-  const zipPath = path.join(outDir, "logseq-github-auto-sync-0.2.0.zip");
+  const zipPath = path.join(outDir, "logseq-github-auto-sync-0.2.1.zip");
   assert(fs.existsSync(zipPath), "expected release zip to exist");
 
   const listing = run("unzip", ["-Z1", zipPath]).stdout.trim().split(/\r?\n/).sort();

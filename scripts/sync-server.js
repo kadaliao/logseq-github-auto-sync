@@ -37,7 +37,6 @@ function detectGraphRoot() {
 const GRAPH_ROOT = detectGraphRoot();
 const SETTINGS_PATH = expandHome(process.env.LOGSEQ_GITHUB_SYNC_SETTINGS || "~/.logseq/settings/logseq-github-auto-sync.json");
 const HELPER = path.join(__dirname, "sync-helper.js");
-const NODE = process.execPath;
 const MAX_BODY = 1024 * 1024;
 const ALLOWED_COMMANDS = new Set(["sync", "scan"]);
 const ALLOWED_ORIGIN_PATTERNS = [
@@ -53,6 +52,27 @@ function expandHome(value) {
   if (value === "~") return os.homedir();
   if (value.startsWith("~/")) return path.join(os.homedir(), value.slice(2));
   return value;
+}
+
+function executableExists(commandPath) {
+  return Boolean(commandPath && path.isAbsolute(commandPath) && fs.existsSync(commandPath));
+}
+
+function resolveNodeCommand() {
+  const candidates = [
+    process.env.LOGSEQ_GITHUB_SYNC_NODE,
+    process.execPath,
+    "/opt/homebrew/bin/node",
+    "/usr/local/bin/node",
+    "/usr/bin/node"
+  ].filter(Boolean);
+
+  for (const candidate of candidates) {
+    if (candidate === "node") return candidate;
+    if (executableExists(candidate)) return candidate;
+  }
+
+  return "node";
 }
 
 function readSettings() {
@@ -149,10 +169,11 @@ function sendCors(res, req, status, payload) {
 
 function run(command, cfg) {
   return new Promise((resolve) => {
+    const nodeCommand = resolveNodeCommand();
     const env = Object.assign({}, process.env, {
       PATH: `/opt/homebrew/bin:/usr/local/bin:${process.env.PATH || ""}`
     });
-    const child = spawn(NODE, helperArgs(command, cfg), {
+    const child = spawn(nodeCommand, helperArgs(command, cfg), {
       cwd: GRAPH_ROOT,
       env,
       stdio: ["ignore", "pipe", "pipe"]
@@ -161,7 +182,7 @@ function run(command, cfg) {
     let stderr = "";
     child.stdout.on("data", (chunk) => { stdout += chunk; });
     child.stderr.on("data", (chunk) => { stderr += chunk; });
-    child.on("error", (error) => resolve({ exitCode: 1, stdout, stderr: stderr + error.message }));
+    child.on("error", (error) => resolve({ exitCode: 1, stdout, stderr: `${stderr}${error.message} (node: ${nodeCommand})` }));
     child.on("close", (code) => resolve({ exitCode: code == null ? 1 : code, stdout, stderr }));
   });
 }

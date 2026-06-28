@@ -10,6 +10,12 @@ const serverScript = path.join(pluginRoot, "scripts", "sync-server.js");
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "logseq-server-test-"));
 const graph = path.join(tmp, "graph");
 const port = 32000 + Math.floor(Math.random() * 2000);
+const nodeProbePort = port + 2000;
+const nodeCommand = fs.existsSync("/opt/homebrew/bin/node")
+  ? "/opt/homebrew/bin/node"
+  : fs.existsSync(process.execPath)
+    ? process.execPath
+    : "node";
 
 function write(file, content) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
@@ -37,12 +43,12 @@ function waitForServer(child) {
   });
 }
 
-function request(method, requestPath, body, headers = {}) {
+function request(portNumber, method, requestPath, body, headers = {}) {
   return new Promise((resolve, reject) => {
     const payload = body == null ? "" : JSON.stringify(body);
     const req = http.request({
       hostname: "127.0.0.1",
-      port,
+      port: portNumber,
       path: requestPath,
       method,
       headers: Object.assign({
@@ -63,8 +69,37 @@ function request(method, requestPath, body, headers = {}) {
 }
 
 (async () => {
+  fs.mkdirSync(graph, { recursive: true });
+  const badNodePath = path.join(tmp, "missing-node");
+  const staleExecPathChild = spawn(nodeCommand, [
+    "-e",
+    `
+process.execPath = ${JSON.stringify(badNodePath)};
+require(${JSON.stringify(serverScript)});
+setTimeout(() => {}, 1000000);
+`
+  ], {
+    cwd: graph,
+    env: Object.assign({}, process.env, {
+      LOGSEQ_GITHUB_SYNC_GRAPH: graph,
+      LOGSEQ_GITHUB_SYNC_PORT: String(nodeProbePort),
+    }),
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+
+  try {
+    await waitForServer(staleExecPathChild);
+    const scan = await request(nodeProbePort, "POST", "/scan", { settings: {} }, { Origin: "lsp://logseq.io" });
+    assert.strictEqual(scan.statusCode, 200);
+    const payload = JSON.parse(scan.body);
+    assert.strictEqual(payload.exitCode, 0);
+    assert.notStrictEqual(payload.stderr.includes(`spawn ${badNodePath} ENOENT`), true);
+  } finally {
+    staleExecPathChild.kill();
+  }
+
   write(path.join(graph, "pages", "A.md"), "- hello\n");
-  const child = spawn(process.execPath, [serverScript], {
+  const child = spawn(nodeCommand, [serverScript], {
     cwd: graph,
     env: Object.assign({}, process.env, {
       LOGSEQ_GITHUB_SYNC_GRAPH: graph,
@@ -76,14 +111,14 @@ function request(method, requestPath, body, headers = {}) {
   try {
     await waitForServer(child);
 
-    const blocked = await request("POST", "/scan", { settings: {} }, { Origin: "https://example.invalid" });
+    const blocked = await request(port, "POST", "/scan", { settings: {} }, { Origin: "https://example.invalid" });
     assert.strictEqual(blocked.statusCode, 403);
     assert(!blocked.headers["access-control-allow-origin"]);
 
-    const preflight = await request("OPTIONS", "/scan", null, { Origin: "https://example.invalid" });
+    const preflight = await request(port, "OPTIONS", "/scan", null, { Origin: "https://example.invalid" });
     assert.strictEqual(preflight.statusCode, 403);
 
-    const allowed = await request("POST", "/scan", { settings: {} }, { Origin: "lsp://logseq.io" });
+    const allowed = await request(port, "POST", "/scan", { settings: {} }, { Origin: "lsp://logseq.io" });
     assert.strictEqual(allowed.statusCode, 200);
     assert.strictEqual(allowed.headers["access-control-allow-origin"], "lsp://logseq.io");
     const payload = JSON.parse(allowed.body);
