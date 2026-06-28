@@ -129,17 +129,35 @@ function createContext(overrides = {}) {
 
   context.logseq.model.githubAutoSyncMenu();
   assert.strictEqual(providedUis.length, 1, "expected toolbar click to render a menu");
-  assert(providedUis[0].template.includes("Current status"), "expected menu to show current sync status");
-  assert(providedUis[0].template.includes("Source graph Git"), "expected menu to separate source graph Git status");
+  assert(providedUis[0].template.includes("github-auto-sync-popover-menu"), "expected toolbar click to render a compact menu");
+  assert(!providedUis[0].template.includes("Current status"), "toolbar menu should not render the full status panel");
+  assert(!providedUis[0].template.includes("github-auto-sync-status-card"), "toolbar menu should not render status cards");
   assert(providedUis[0].template.includes("Sync now"), "expected menu sync action");
+  assert(providedUis[0].template.includes("Show status"), "expected menu status action");
   assert(providedUis[0].template.includes("Recent history"), "expected menu history action");
   assert(providedUis[0].template.includes("Open settings"), "expected menu settings action");
+  assert.strictEqual(context.logseq.mainUIStyle.position, "fixed", "expected popover to be fixed");
+  assert.strictEqual(context.logseq.mainUIStyle.width, "320px", "expected compact popover width");
+  assert.strictEqual(context.logseq.mainUIStyle.maxWidth, "calc(100vw - 24px)", "expected mobile-safe popover width");
+  assert.strictEqual(context.logseq.mainUIStyle.height, "auto", "expected popover not to fill page height");
+  assert.strictEqual(context.logseq.mainUIStyle.background, "transparent", "expected transparent outer main UI");
+  assert.strictEqual(context.logseq.mainUIStyle.pointerEvents, "auto", "expected popover actions to remain clickable");
 
+  context.logseq.model.githubAutoSyncStatus();
+  assert(
+    providedUis.at(-1).template.includes("Current status") &&
+      providedUis.at(-1).template.includes("Source graph Git") &&
+      providedUis.at(-1).template.includes("github-auto-sync-status-row"),
+    "expected status action to render compact status rows"
+  );
+
+  const fetchesBeforeSync = fetchCalls.length;
   context.logseq.model.githubAutoSyncNow();
   await new Promise((resolve) => setTimeout(resolve, 20));
-  assert.strictEqual(fetchCalls.length, 1, "expected local sync server call");
-  assert.strictEqual(fetchCalls[0].url, "http://127.0.0.1:31937/sync");
-  const body = JSON.parse(fetchCalls[0].options.body);
+  assert.strictEqual(fetchCalls.length, fetchesBeforeSync + 1, "expected one local sync server call");
+  const syncCall = fetchCalls[fetchesBeforeSync];
+  assert.strictEqual(syncCall.url, "http://127.0.0.1:31937/sync");
+  const body = JSON.parse(syncCall.options.body);
   assert.strictEqual(body.settings.repoUrl, "git@github.com:kadaliao/logseq-graph.git");
   assert.strictEqual(body.settings.branch, "master");
   assert.strictEqual(body.settings.authorName, "");

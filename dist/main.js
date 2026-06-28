@@ -247,12 +247,20 @@
     return "•";
   }
 
+  function menuActionHtml(action, label, icon, extraClass) {
+    return (
+      `<button data-on-click="${escapeHtml(action)}" class="github-auto-sync-menu-button ${escapeHtml(extraClass || "")}">` +
+      `<span class="github-auto-sync-menu-icon">${escapeHtml(icon || "")}</span>` +
+      `<span class="github-auto-sync-menu-copy">${escapeHtml(label)}</span>` +
+      '</button>'
+    );
+  }
+
   function panelActionsHtml() {
     return [
-      '<button data-on-click="githubAutoSyncNow" class="github-auto-sync-menu-button primary">Sync now</button>',
-      '<button data-on-click="githubAutoSyncShowHistory" class="github-auto-sync-menu-button">Recent history</button>',
-      '<button data-on-click="githubAutoSyncSettings" class="github-auto-sync-menu-button">Open settings</button>',
-      '<button data-on-click="githubAutoSyncClosePanel" class="github-auto-sync-menu-button ghost">Close</button>'
+      '<button data-on-click="githubAutoSyncMenu" class="github-auto-sync-text-button">Menu</button>',
+      '<button data-on-click="githubAutoSyncNow" class="github-auto-sync-text-button primary">Sync now</button>',
+      '<button data-on-click="githubAutoSyncClosePanel" class="github-auto-sync-text-button ghost">Close</button>'
     ].join("");
   }
 
@@ -272,52 +280,94 @@
     ).join("");
   }
 
-  function renderPanel(title, options) {
-    const opts = Object.assign({ historyLimit: 4, historyOnly: false }, options || {});
-    const body = opts.historyOnly
-      ? `<section><h2>Recent GitHub Auto Sync history</h2>${historyHtml(10)}</section>`
-      : [
-        '<section><h2>Current status</h2>',
-        '<div class="github-auto-sync-status-grid">',
-        '<div class="github-auto-sync-status-card">',
-        `<span>${escapeHtml(statusPanel.sync.icon)}</span><strong>${escapeHtml(statusPanel.sync.label)}</strong>`,
-        `<small>${escapeHtml(statusPanel.sync.detail)}</small>`,
-        '</div>',
-        '<div class="github-auto-sync-status-card">',
-        `<span>${escapeHtml(statusPanel.source.icon)}</span><strong>${escapeHtml(statusPanel.source.label)}</strong>`,
-        `<small>${escapeHtml(statusPanel.source.detail)}</small>`,
-        '</div>',
-        '</div></section>',
-        `<section><h2>Recent history</h2>${historyHtml(opts.historyLimit)}</section>`
-      ].join("");
+  function statusRowsHtml() {
+    return [
+      '<div class="github-auto-sync-status-list">',
+      '<div class="github-auto-sync-status-row">',
+      `<span class="github-auto-sync-status-icon">${escapeHtml(statusPanel.sync.icon)}</span>`,
+      '<span class="github-auto-sync-status-copy">',
+      `<strong>${escapeHtml(statusPanel.sync.label)}</strong>`,
+      `<small>${escapeHtml(statusPanel.sync.detail)}</small>`,
+      '</span>',
+      '</div>',
+      '<div class="github-auto-sync-status-row">',
+      `<span class="github-auto-sync-status-icon">${escapeHtml(statusPanel.source.icon)}</span>`,
+      '<span class="github-auto-sync-status-copy">',
+      `<strong>${escapeHtml(statusPanel.source.label)}</strong>`,
+      `<small>${escapeHtml(statusPanel.source.detail)}</small>`,
+      '</span>',
+      '</div>',
+      '</div>'
+    ].join("");
+  }
+
+  function menuHtml() {
+    return [
+      '<section class="github-auto-sync-menu-list">',
+      menuActionHtml("githubAutoSyncNow", "Sync now", "↻", "primary"),
+      menuActionHtml("githubAutoSyncStatus", "Show status", "●"),
+      menuActionHtml("githubAutoSyncShowHistory", "Recent history", "◷"),
+      menuActionHtml("githubAutoSyncSettings", "Open settings", "⚙"),
+      '</section>',
+      '<p class="github-auto-sync-menu-note">',
+      `<span>${escapeHtml(statusPanel.sync.icon)}</span>`,
+      `<span>${escapeHtml(statusPanel.sync.label)}</span>`,
+      '</p>'
+    ].join("");
+  }
+
+  function renderPopover(mode) {
+    const view = mode || "menu";
+    let body = menuHtml();
+    let title = "GitHub Auto Sync";
+    let footer = "";
+
+    if (view === "status") {
+      body = `<section><h2>Current status</h2>${statusRowsHtml()}</section>`;
+      footer = `<footer>${panelActionsHtml()}</footer>`;
+    } else if (view === "history") {
+      title = "Sync history";
+      body = `<section><h2>Recent GitHub Auto Sync history</h2>${historyHtml(10)}</section>`;
+      footer = `<footer>${panelActionsHtml()}</footer>`;
+    }
 
     const template =
-      '<main class="github-auto-sync-panel">' +
-      `<header><h1>${escapeHtml(title || "GitHub Auto Sync")}</h1><button data-on-click="githubAutoSyncClosePanel" aria-label="Close">×</button></header>` +
+      `<main class="github-auto-sync-popover github-auto-sync-popover-${escapeHtml(view)}">` +
+      `<header><h1>${escapeHtml(title)}</h1><button data-on-click="githubAutoSyncClosePanel" aria-label="Close">×</button></header>` +
       body +
-      `<footer>${panelActionsHtml()}</footer>` +
+      footer +
       '</main>';
 
     if (typeof logseq.provideUI === "function") logseq.provideUI({ key: panelKey, template });
     if (typeof logseq.setMainUIInlineStyle === "function") {
       logseq.setMainUIInlineStyle({
         position: "fixed",
-        top: "52px",
-        right: "18px",
-        width: "420px",
+        top: "44px",
+        right: "12px",
+        width: "320px",
         maxWidth: "calc(100vw - 24px)",
-        zIndex: 9999
+        height: "auto",
+        maxHeight: "calc(100vh - 64px)",
+        overflow: "visible",
+        background: "transparent",
+        boxShadow: "none",
+        zIndex: 9999,
+        pointerEvents: "auto"
       });
     }
     if (typeof logseq.showMainUI === "function") logseq.showMainUI({ autoFocus: false });
   }
 
   function showHistory() {
-    renderPanel("GitHub Auto Sync", { historyOnly: true });
+    renderPopover("history");
+  }
+
+  function renderStatusPanel() {
+    renderPopover("status");
   }
 
   function showMenu() {
-    renderPanel("GitHub Auto Sync");
+    renderPopover("menu");
   }
 
   async function runHelper(command, cfg, options) {
@@ -444,17 +494,32 @@
   }
 
   async function showStatus() {
+    renderStatusPanel();
     const cfg = settings();
-    const result = await runHelper("scan", cfg, { allowFailure: true });
-    const output = core.redactGitOutput(result.stdout || result.stderr || "No status output.").trim();
-    statusPanel.source = sourceGraphStatus(result);
-    statusPanel.sync = {
-      icon: result.exitCode === 0 ? "✅" : "⚠",
-      label: result.exitCode === 0 ? "Encryption scan complete" : "Encryption scan needs attention",
-      detail: output.slice(0, 240)
-    };
-    renderPanel("GitHub Auto Sync");
-    notify(`${lastStatus}\n${output.slice(0, 900)}`, result.exitCode === 0 ? "success" : "warning");
+    try {
+      const result = await runHelper("scan", cfg, { allowFailure: true });
+      const output = core.redactGitOutput(result.stdout || result.stderr || "No status output.").trim();
+      statusPanel.source = sourceGraphStatus(result);
+      statusPanel.sync = {
+        icon: result.exitCode === 0 ? "✅" : "⚠",
+        label: result.exitCode === 0 ? "Encryption scan complete" : "Encryption scan needs attention",
+        detail: result.exitCode === 0 ? "Helper status check completed." : output.slice(0, 240)
+      };
+      renderStatusPanel();
+      notify(
+        result.exitCode === 0 ? "GitHub Auto Sync status refreshed." : "GitHub Auto Sync status needs attention.",
+        result.exitCode === 0 ? "success" : "warning"
+      );
+    } catch (error) {
+      const detail = core.redactGitOutput(error && error.message ? error.message : error).slice(0, 240);
+      statusPanel.sync = {
+        icon: "⚠",
+        label: "Status check unavailable",
+        detail
+      };
+      renderStatusPanel();
+      notify(detail, "warning");
+    }
   }
 
   function showLastLog() {
@@ -485,6 +550,9 @@
       githubAutoSyncMenu() {
         showMenu();
       },
+      githubAutoSyncStatus() {
+        showStatus().catch((error) => console.error(error));
+      },
       githubAutoSyncSettings() {
         if (typeof logseq.showSettingsUI === "function") logseq.showSettingsUI();
       },
@@ -503,10 +571,11 @@
       logseq.provideStyle({
         key: "github-auto-sync-ui",
         style: `
-          .github-auto-sync-panel {
+          .github-auto-sync-popover {
             box-sizing: border-box;
-            width: 100%;
-            max-height: calc(100vh - 76px);
+            width: 320px;
+            max-width: calc(100vw - 24px);
+            max-height: calc(100vh - 64px);
             overflow: auto;
             border: 1px solid var(--ls-border-color, rgba(120, 120, 120, .25));
             border-radius: 8px;
@@ -515,39 +584,45 @@
             box-shadow: 0 14px 34px rgba(0, 0, 0, .18);
             padding: 12px;
             font-size: 13px;
+            line-height: 1.35;
           }
-          .github-auto-sync-panel header {
+          .github-auto-sync-popover header {
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 8px;
             margin-bottom: 10px;
           }
-          .github-auto-sync-panel h1,
-          .github-auto-sync-panel h2 {
+          .github-auto-sync-popover h1,
+          .github-auto-sync-popover h2 {
             margin: 0;
             font-size: 14px;
             font-weight: 650;
+            letter-spacing: 0;
           }
-          .github-auto-sync-panel h2 {
+          .github-auto-sync-popover h2 {
             margin-bottom: 8px;
             color: var(--ls-secondary-text-color, #5a5a5a);
           }
-          .github-auto-sync-panel header button {
+          .github-auto-sync-popover header button {
             border: 0;
             background: transparent;
             color: inherit;
             font-size: 20px;
+            line-height: 1;
+            padding: 0 2px;
             cursor: pointer;
           }
-          .github-auto-sync-panel section {
+          .github-auto-sync-popover section {
             margin: 10px 0;
           }
-          .github-auto-sync-status-grid {
+          .github-auto-sync-menu-list,
+          .github-auto-sync-status-list {
             display: grid;
-            gap: 8px;
+            gap: 6px;
           }
-          .github-auto-sync-status-card,
+          .github-auto-sync-menu-button,
+          .github-auto-sync-status-row,
           .github-auto-sync-history-row {
             display: grid;
             grid-template-columns: 24px 1fr;
@@ -557,29 +632,64 @@
             border-radius: 8px;
             padding: 8px;
           }
-          .github-auto-sync-status-card strong,
+          .github-auto-sync-menu-button {
+            width: 100%;
+            background: var(--ls-secondary-background-color, #f5f5f5);
+            color: inherit;
+            text-align: left;
+            cursor: pointer;
+          }
+          .github-auto-sync-menu-button.primary {
+            border-color: var(--ls-link-text-color, #2563eb);
+          }
+          .github-auto-sync-menu-icon,
+          .github-auto-sync-status-icon,
+          .github-auto-sync-history-icon {
+            text-align: center;
+          }
+          .github-auto-sync-menu-copy,
+          .github-auto-sync-status-copy,
+          .github-auto-sync-history-body {
+            min-width: 0;
+          }
+          .github-auto-sync-menu-copy {
+            line-height: 1.35;
+          }
+          .github-auto-sync-menu-button strong,
+          .github-auto-sync-status-row strong,
           .github-auto-sync-history-row strong {
             display: block;
             line-height: 1.35;
           }
-          .github-auto-sync-status-card small,
+          .github-auto-sync-menu-button small,
+          .github-auto-sync-status-row small,
           .github-auto-sync-history-row small,
           .github-auto-sync-empty {
             display: block;
             margin-top: 2px;
             color: var(--ls-secondary-text-color, #666);
             line-height: 1.35;
+            white-space: normal;
+            overflow-wrap: anywhere;
+          }
+          .github-auto-sync-menu-note {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin: 10px 0 0;
+            color: var(--ls-secondary-text-color, #666);
+            font-size: 12px;
           }
           .github-auto-sync-history-row {
             margin-bottom: 6px;
           }
-          .github-auto-sync-panel footer {
+          .github-auto-sync-popover footer {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
             margin-top: 12px;
           }
-          .github-auto-sync-menu-button {
+          .github-auto-sync-text-button {
             border: 1px solid var(--ls-border-color, rgba(120, 120, 120, .3));
             border-radius: 6px;
             background: var(--ls-secondary-background-color, #f5f5f5);
@@ -587,12 +697,12 @@
             padding: 6px 9px;
             cursor: pointer;
           }
-          .github-auto-sync-menu-button.primary {
+          .github-auto-sync-text-button.primary {
             background: var(--ls-link-text-color, #2563eb);
             border-color: var(--ls-link-text-color, #2563eb);
             color: #fff;
           }
-          .github-auto-sync-menu-button.ghost {
+          .github-auto-sync-text-button.ghost {
             margin-left: auto;
           }
         `
