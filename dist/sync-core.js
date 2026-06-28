@@ -19,13 +19,14 @@
     commitMessage: "Auto sync Logseq graph",
     encryptedSync: true,
     encryptedTags: "encrypted, secret",
-    agePath: "/opt/homebrew/bin/age",
+    agePath: "age",
     recipientsPath: "~/.config/logseq-github-auto-sync/recipients.txt",
     identityPath: "~/.config/logseq-github-auto-sync/identity.txt",
     largeFileStorage: true,
     lfsThresholdMb: 50,
     secretScanMode: "encrypted-sync-gate",
-    syncServerUrl: "http://127.0.0.1:31937"
+    syncServerUrl: "http://127.0.0.1:31937",
+    showDetailedLogs: false
   };
 
   const SECRET_PATTERNS = [
@@ -126,6 +127,7 @@
       largeFileStorage: asBool(merged.largeFileStorage, DEFAULTS.largeFileStorage),
       lfsThresholdMb: Math.max(1, asNumber(merged.lfsThresholdMb, DEFAULTS.lfsThresholdMb)),
       syncServerUrl: cleanText(merged.syncServerUrl, DEFAULTS.syncServerUrl),
+      showDetailedLogs: asBool(merged.showDetailedLogs, DEFAULTS.showDetailedLogs),
       secretScanMode: DEFAULTS.secretScanMode
     };
   }

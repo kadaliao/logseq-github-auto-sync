@@ -5,6 +5,7 @@
   let timerId = null;
   let syncPromise = null;
   let lastStatus = "Not synced yet";
+  let lastLog = "No sync log yet.";
 
   // Safe API wrapper with feature detection
   const api = {
@@ -70,9 +71,9 @@
     {
       key: "agePath",
       type: "string",
-      default: "/opt/homebrew/bin/age",
+      default: "age",
       title: "age executable path",
-      description: "Path to the age CLI. Homebrew on Apple Silicon usually installs /opt/homebrew/bin/age."
+      description: "age CLI command or path. Use age when it is available in PATH."
     },
     {
       key: "recipientsPath",
@@ -143,6 +144,13 @@
       default: "Auto sync Logseq graph",
       title: "Commit message",
       description: "Message used for automatic commits. A timestamp is appended."
+    },
+    {
+      key: "showDetailedLogs",
+      type: "boolean",
+      default: false,
+      title: "Show detailed sync logs",
+      description: "Show command output in sync popups. Keep this off for quieter notifications."
     }
   ];
 
@@ -156,6 +164,23 @@
 
   function syncServerUrl(cfg) {
     return String(cfg.syncServerUrl || "http://127.0.0.1:31937").replace(/\/+$/, "");
+  }
+
+  function cleanOutput(result) {
+    return core.redactGitOutput(`${result.stdout || ""}${result.stderr ? `\n${result.stderr}` : ""}`).trim();
+  }
+
+  function syncSummary(result) {
+    const output = cleanOutput(result);
+    const match = output.match(/sync complete: committed=(\w+) encrypted_files=(\d+) lfs_files=(\d+)/);
+    if (!match) return "Encrypted GitHub sync complete.";
+    const committed = match[1] === "true" ? "committed changes" : "no changes to commit";
+    return `Encrypted GitHub sync complete: ${committed}, encrypted ${match[2]} file(s), LFS ${match[3]} file(s).`;
+  }
+
+  function rememberLog(status, result) {
+    const output = cleanOutput(result);
+    lastLog = `${status}\n${output || "No command output."}`.slice(0, 4000);
   }
 
   async function runHelper(command, cfg, options) {
@@ -214,13 +239,16 @@
 
     syncPromise = (async () => {
       try {
+        notify(`GitHub Auto Sync: Sync started (${trigger || "manual"}).`, "info");
         const result = await runHelper("sync", cfg);
         lastStatus = `Last encrypted sync: ${new Date().toLocaleString()} (${trigger || "manual"})`;
-        const output = core.redactGitOutput(result.stdout || result.stderr || "").trim();
-        notify(output || "Encrypted GitHub sync complete.", "success");
+        rememberLog(lastStatus, result);
+        const output = cleanOutput(result);
+        notify(cfg.showDetailedLogs && output ? `${syncSummary(result)}\n${output}` : syncSummary(result), "success");
       } catch (error) {
         lastStatus = `Last encrypted sync failed: ${new Date().toLocaleString()}`;
-        notify(core.redactGitOutput(error && error.message ? error.message : error), "error");
+        lastLog = `${lastStatus}\n${core.redactGitOutput(error && error.message ? error.message : error)}`.slice(0, 4000);
+        notify(lastLog, "error");
         throw error;
       } finally {
         syncPromise = null;
@@ -239,6 +267,10 @@
     const result = await runHelper("scan", cfg, { allowFailure: true });
     const output = core.redactGitOutput(result.stdout || result.stderr || "No status output.").trim();
     notify(`${lastStatus}\n${output.slice(0, 900)}`, result.exitCode === 0 ? "success" : "warning");
+  }
+
+  function showLastLog() {
+    notify(lastLog, "info");
   }
 
   function reschedule() {
@@ -282,6 +314,10 @@
     logseq.App.registerCommandPalette(
       { key: "github-auto-sync-status", label: "GitHub Auto Sync: show encryption status" },
       () => showStatus().catch((error) => console.error(error))
+    );
+    logseq.App.registerCommandPalette(
+      { key: "github-auto-sync-last-log", label: "GitHub Auto Sync: show last sync log" },
+      () => showLastLog()
     );
     logseq.App.registerCommandPalette(
       { key: "github-auto-sync-settings", label: "GitHub Auto Sync: open settings" },

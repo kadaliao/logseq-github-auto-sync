@@ -17,6 +17,14 @@ const nodeCommand = fs.existsSync("/opt/homebrew/bin/node")
     ? process.execPath
     : "node";
 
+const serverSource = fs.readFileSync(serverScript, "utf8");
+for (const hardcodedNodePath of ["/opt/homebrew/bin/node", "/usr/local/bin/node", "/usr/bin/node"]) {
+  assert(
+    !serverSource.includes(JSON.stringify(hardcodedNodePath)),
+    `sync server should resolve node from PATH instead of hardcoding ${hardcodedNodePath}`
+  );
+}
+
 function write(file, content) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, content);

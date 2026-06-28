@@ -73,7 +73,7 @@ node ~/.logseq/plugins/logseq-github-auto-sync/scripts/sync-server.js
 
 1. **GitHub 仓库 URL**：`git@github.com:your-username/your-private-logseq.git`
 2. **加密标签**：`encrypted, secret`（默认）
-3. **Age 路径**：`/opt/homebrew/bin/age`（如果在 PATH 中则为 `age`）
+3. **Age 路径**：`age`（如果 age 不在 PATH 中，也可以填绝对路径）
 4. **Recipients 路径**：`~/.config/logseq-github-auto-sync/recipients.txt`
 5. **启用自动同步**：可选（默认：关闭）
 
@@ -94,6 +94,8 @@ GitHub Auto Sync: encrypted sync now
 ```
 GitHub Auto Sync: encrypted sync now
 ```
+
+同步会立刻显示开始提示。默认完成弹窗保持简短；需要排查时，在设置中打开 **Show detailed sync logs**，弹窗会显示命令输出。
 
 ### 自动同步
 
@@ -128,6 +130,14 @@ GitHub Auto Sync: show encryption status
 - 上次同步时间
 - 将要加密的文件列表
 - 检测到的敏感信息
+
+### 查看最近同步日志
+
+```
+GitHub Auto Sync: show last sync log
+```
+
+显示最近一次同步结果和已脱敏的 helper 输出。
 
 ## 故障排查
 
@@ -247,9 +257,19 @@ cat ~/.config/logseq-github-auto-sync/bob-recipients.txt >> ~/.config/logseq-git
     <string>com.logseq.github-sync</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/usr/local/bin/node</string>
-        <string>/Users/YOUR_USER/logseq-github-auto-sync/scripts/sync-server.js</string>
+        <string>/bin/sh</string>
+        <string>-lc</string>
+        <string>exec node "$HOME/.logseq/plugins/logseq-github-auto-sync/scripts/sync-server.js"</string>
     </array>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <key>LOGSEQ_GITHUB_SYNC_GRAPH</key>
+        <string>~/logseq-graph</string>
+        <key>LOGSEQ_GITHUB_SYNC_PORT</key>
+        <string>31937</string>
+    </dict>
     <key>RunAtLoad</key>
     <true/>
     <key>KeepAlive</key>
@@ -267,6 +287,8 @@ cat ~/.config/logseq-github-auto-sync/bob-recipients.txt >> ~/.config/logseq-git
 ```bash
 launchctl load ~/Library/LaunchAgents/com.logseq.github-sync.plist
 ```
+
+如果你的 graph 不在 `~/logseq-graph`，把 `LOGSEQ_GITHUB_SYNC_GRAPH` 改成自己的 graph 路径。
 
 ## 更新插件
 

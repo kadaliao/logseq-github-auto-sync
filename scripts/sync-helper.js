@@ -13,8 +13,8 @@ const STATE_DIR = ".logseq-github-auto-sync";
 const STAGING_DIR = "sync-repo";
 const DEFAULT_AUTHOR_NAME = "Logseq GitHub Auto Sync";
 const DEFAULT_AUTHOR_EMAIL = "logseq-github-auto-sync.local";
-const GIT = process.env.LOGSEQ_GITHUB_SYNC_GIT || "/usr/bin/git";
-const RSYNC = process.env.LOGSEQ_GITHUB_SYNC_RSYNC || "/usr/bin/rsync";
+const GIT = process.env.LOGSEQ_GITHUB_SYNC_GIT || "git";
+const RSYNC = process.env.LOGSEQ_GITHUB_SYNC_RSYNC || "rsync";
 
 // Generate cryptographically secure temporary file suffix
 function generateTempSuffix() {
@@ -114,7 +114,7 @@ function normalizeOptions(raw) {
     pullBeforePush: raw.pullBeforePush == null ? true : raw.pullBeforePush,
     commitMessage: raw.commitMessage || "Auto sync Logseq graph",
     encryptedTags: raw.encryptedTags || "encrypted, secret",
-    agePath: raw.agePath || "/opt/homebrew/bin/age",
+    agePath: raw.agePath || "age",
     recipientsPath: raw.recipientsPath || "~/.config/logseq-github-auto-sync/recipients.txt",
     identityPath: raw.identityPath || "~/.config/logseq-github-auto-sync/identity.txt",
     largeFileStorage: raw.largeFileStorage == null ? true : raw.largeFileStorage,

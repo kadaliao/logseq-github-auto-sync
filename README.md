@@ -85,17 +85,25 @@ Click 🔒 in the toolbar or use Command Palette:
 GitHub Auto Sync: encrypted sync now
 ```
 
+The plugin shows a start notification immediately and a completion summary when the helper finishes. For troubleshooting, use:
+
+```
+GitHub Auto Sync: show last sync log
+GitHub Auto Sync: show encryption status
+```
+
 ## Settings
 
 | Setting | Default | Description |
 |---------|---------|-------------|
 | `repoUrl` | (required) | GitHub repository URL |
 | `encryptedTags` | `encrypted, secret` | Tags that trigger encryption |
-| `agePath` | `/opt/homebrew/bin/age` | Path to age binary |
+| `agePath` | `age` | age command or path |
 | `recipientsPath` | `~/.config/logseq-github-auto-sync/recipients.txt` | Public key file |
 | `autoSync` | `false` | Enable timed auto-sync |
 | `syncIntervalMinutes` | `15` | Sync interval (min: 1) |
 | `lfsThresholdMb` | `50` | Files ≥ this size use Git LFS |
+| `showDetailedLogs` | `false` | Show command output in sync popups |
 
 ## Secret Detection
 

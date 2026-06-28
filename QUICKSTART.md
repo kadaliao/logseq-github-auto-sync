@@ -73,7 +73,7 @@ In the plugin settings:
 
 1. **GitHub repo URL**: `git@github.com:your-username/your-private-logseq.git`
 2. **Encrypted tags**: `encrypted, secret` (default)
-3. **Age path**: `/opt/homebrew/bin/age` (or `age` if in PATH)
+3. **Age path**: `age` (or an absolute path if age is not in PATH)
 4. **Recipients path**: `~/.config/logseq-github-auto-sync/recipients.txt`
 5. **Enable auto-sync**: Optional (default: off)
 
@@ -94,6 +94,8 @@ Click the 🔒 lock icon in the toolbar, or use Command Palette:
 ```
 GitHub Auto Sync: encrypted sync now
 ```
+
+Sync shows a start notification immediately. By default, completion popups stay short; enable **Show detailed sync logs** in settings when you want command output in the popup.
 
 ### Auto Sync
 
@@ -128,6 +130,14 @@ Shows:
 - Last sync time
 - Files that will be encrypted
 - Any detected secrets
+
+### Check Last Sync Log
+
+```
+GitHub Auto Sync: show last sync log
+```
+
+Shows the most recent sync result with redacted helper output.
 
 ## Troubleshooting
 
@@ -247,9 +257,19 @@ Create `~/Library/LaunchAgents/com.logseq.github-sync.plist`:
     <string>com.logseq.github-sync</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/usr/local/bin/node</string>
-        <string>/Users/YOUR_USER/logseq-github-auto-sync/scripts/sync-server.js</string>
+        <string>/bin/sh</string>
+        <string>-lc</string>
+        <string>exec node "$HOME/.logseq/plugins/logseq-github-auto-sync/scripts/sync-server.js"</string>
     </array>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+        <key>LOGSEQ_GITHUB_SYNC_GRAPH</key>
+        <string>~/logseq-graph</string>
+        <key>LOGSEQ_GITHUB_SYNC_PORT</key>
+        <string>31937</string>
+    </dict>
     <key>RunAtLoad</key>
     <true/>
     <key>KeepAlive</key>
@@ -267,6 +287,8 @@ Load it:
 ```bash
 launchctl load ~/Library/LaunchAgents/com.logseq.github-sync.plist
 ```
+
+If your graph is not at `~/logseq-graph`, change `LOGSEQ_GITHUB_SYNC_GRAPH` to your graph path.
 
 ## Updating
 

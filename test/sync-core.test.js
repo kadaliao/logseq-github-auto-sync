@@ -9,8 +9,12 @@ const settings = core.normalizeSettings({
 });
 assert.strictEqual(settings.syncIntervalMinutes, 1);
 assert.strictEqual(settings.branch, "master");
-assert.strictEqual(settings.agePath, "/opt/homebrew/bin/age");
+assert.strictEqual(settings.agePath, "age");
+assert.strictEqual(settings.showDetailedLogs, false);
 assert.deepStrictEqual(core.splitEncryptedTags(settings.encryptedTags), ["encrypted", "Private"]);
+
+const detailedLogSettings = core.normalizeSettings({ showDetailedLogs: true });
+assert.strictEqual(detailedLogSettings.showDetailedLogs, true);
 
 const customServer = core.normalizeSettings({ syncServerUrl: "http://127.0.0.1:4096/" });
 assert.strictEqual(customServer.syncServerUrl, "http://127.0.0.1:4096/");

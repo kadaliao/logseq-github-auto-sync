@@ -8,14 +8,14 @@ const DEFAULTS = Object.freeze({
   git: {
     defaultAuthorName: "Logseq GitHub Auto Sync",
     defaultAuthorEmail: "logseq-github-auto-sync.local",
-    command: process.env.LOGSEQ_GITHUB_SYNC_GIT || "/usr/bin/git",
-    rsyncCommand: process.env.LOGSEQ_GITHUB_SYNC_RSYNC || "/usr/bin/rsync"
+    command: process.env.LOGSEQ_GITHUB_SYNC_GIT || "git",
+    rsyncCommand: process.env.LOGSEQ_GITHUB_SYNC_RSYNC || "rsync"
   },
 
   // Age encryption
   age: {
     header: "age-encryption.org/v1",
-    defaultPath: "/opt/homebrew/bin/age",
+    defaultPath: "age",
     defaultRecipientsPath: "~/.config/logseq-github-auto-sync/recipients.txt",
     defaultIdentityPath: "~/.config/logseq-github-auto-sync/identity.txt"
   },

@@ -6,8 +6,8 @@ const { execSync } = require("child_process");
 
 const pluginRoot = path.resolve(__dirname, "..");
 const helper = path.join(pluginRoot, "scripts", "sync-helper.js");
-const age = process.env.LOGSEQ_GITHUB_SYNC_AGE || "/opt/homebrew/bin/age";
-const ageKeygen = process.env.LOGSEQ_GITHUB_SYNC_AGE_KEYGEN || "/opt/homebrew/bin/age-keygen";
+const age = process.env.LOGSEQ_GITHUB_SYNC_AGE || "age";
+const ageKeygen = process.env.LOGSEQ_GITHUB_SYNC_AGE_KEYGEN || "age-keygen";
 
 function run(command, args, options = {}) {
   const result = execSync(`${command} ${args.join(" ")}`, {

@@ -62,9 +62,7 @@ function resolveNodeCommand() {
   const candidates = [
     process.env.LOGSEQ_GITHUB_SYNC_NODE,
     process.execPath,
-    "/opt/homebrew/bin/node",
-    "/usr/local/bin/node",
-    "/usr/bin/node"
+    "node"
   ].filter(Boolean);
 
   for (const candidate of candidates) {
@@ -90,7 +88,7 @@ function normalizeSettings(raw) {
     repoUrl: pick("repoUrl", ""),
     branch: pick("branch", "master"),
     remoteName: pick("remoteName", "origin"),
-    agePath: pick("agePath", "/opt/homebrew/bin/age"),
+    agePath: pick("agePath", "age"),
     recipientsPath: pick("recipientsPath", "~/.config/logseq-github-auto-sync/recipients.txt"),
     identityPath: pick("identityPath", "~/.config/logseq-github-auto-sync/identity.txt"),
     largeFileStorage: Boolean(cfg.largeFileStorage),

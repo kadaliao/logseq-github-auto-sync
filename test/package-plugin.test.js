@@ -22,9 +22,9 @@ function run(command, args, options = {}) {
 
 try {
   const result = run("node", ["scripts/package-plugin.js", "--out", outDir]);
-  assert.match(result.stdout, /created .+logseq-github-auto-sync-0\.2\.1\.zip/);
+  assert.match(result.stdout, /created .+logseq-github-auto-sync-0\.2\.2\.zip/);
 
-  const zipPath = path.join(outDir, "logseq-github-auto-sync-0.2.1.zip");
+  const zipPath = path.join(outDir, "logseq-github-auto-sync-0.2.2.zip");
   assert(fs.existsSync(zipPath), "expected release zip to exist");
 
   const listing = run("unzip", ["-Z1", zipPath]).stdout.trim().split(/\r?\n/).sort();
@@ -44,6 +44,22 @@ try {
   }
   assert(!listing.some((entry) => entry.includes("/test/")), "release zip should not include tests");
   assert(!listing.some((entry) => entry.includes("/.git/")), "release zip should not include git metadata");
+
+  const pathSensitiveEntries = listing.filter((entry) => /\.(?:js|md|json)$/.test(entry));
+  for (const entry of pathSensitiveEntries) {
+    const content = run("unzip", ["-p", zipPath, entry]).stdout;
+    assert(!/\/Users\/(?:liaoxingyi|YOUR_USER)\b/.test(content), `release entry contains a user-specific path: ${entry}`);
+    for (const hardcodedPath of [
+      "/opt/homebrew/bin/node",
+      "/usr/local/bin/node",
+      "/usr/bin/node",
+      "/opt/homebrew/bin/age",
+      "/usr/bin/git",
+      "/usr/bin/rsync",
+    ]) {
+      assert(!content.includes(JSON.stringify(hardcodedPath)), `release entry hardcodes executable path ${hardcodedPath}: ${entry}`);
+    }
+  }
 } finally {
   fs.rmSync(tmp, { recursive: true, force: true });
 }

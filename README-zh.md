@@ -88,17 +88,25 @@ tags:: encrypted
 GitHub Auto Sync: encrypted sync now
 ```
 
+插件会立刻显示开始提示，并在 helper 完成后显示同步摘要。排查问题时可以使用：
+
+```
+GitHub Auto Sync: show last sync log
+GitHub Auto Sync: show encryption status
+```
+
 ## 插件设置
 
 | 设置项 | 默认值 | 说明 |
 |---------|--------|------|
 | `repoUrl` | (必填) | GitHub 仓库 URL |
 | `encryptedTags` | `encrypted, secret` | 触发加密的标签 |
-| `agePath` | `/opt/homebrew/bin/age` | age 二进制文件路径 |
+| `agePath` | `age` | age 命令或可执行文件路径 |
 | `recipientsPath` | `~/.config/logseq-github-auto-sync/recipients.txt` | 公钥文件路径 |
 | `autoSync` | `false` | 启用定时自动同步 |
 | `syncIntervalMinutes` | `15` | 同步间隔（分钟，最小 1） |
 | `lfsThresholdMb` | `50` | 大于此大小的文件使用 Git LFS |
+| `showDetailedLogs` | `false` | 在同步弹窗中显示命令输出 |
 
 ## 敏感信息检测
 
