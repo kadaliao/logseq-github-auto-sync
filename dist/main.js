@@ -140,9 +140,9 @@
     {
       key: "pullBeforePush",
       type: "boolean",
-      default: true,
-      title: "Pull with rebase before push",
-      description: "Run git pull --rebase --autostash in the encrypted staging repo before pushing when the remote branch exists."
+      default: false,
+      title: "Legacy pull before push (ignored)",
+      description: "Deprecated. GitHub Auto Sync now rebuilds the encrypted staging repo from the remote snapshot before copying the current graph, avoiding rebase conflicts."
     },
     {
       key: "commitMessage",

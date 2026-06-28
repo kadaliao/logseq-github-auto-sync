@@ -15,7 +15,7 @@
     syncIntervalMinutes: 15,
     syncOnStart: false,
     syncOnShutdown: true,
-    pullBeforePush: true,
+    pullBeforePush: false,
     commitMessage: "Auto sync Logseq graph",
     encryptedSync: true,
     encryptedTags: "encrypted, secret",

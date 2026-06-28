@@ -112,7 +112,7 @@ function normalizeOptions(raw) {
     repoUrl: raw.repoUrl || "",
     remoteName: raw.remoteName || "origin",
     branch: raw.branch || "master",
-    pullBeforePush: raw.pullBeforePush == null ? true : raw.pullBeforePush,
+    pullBeforePush: false,
     commitMessage: raw.commitMessage || "Auto sync Logseq graph",
     encryptedTags: raw.encryptedTags || "encrypted, secret",
     agePath: raw.agePath || "age",
@@ -519,10 +519,6 @@ function commitAndPush(stagingRoot, cfg, encryptedCount, lfsCount) {
     const timestamp = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
     git(stagingRoot, ["commit", "-m", `${cfg.commitMessage} (${timestamp})`], { allowFailure: false });
     committed = true;
-  }
-
-  if (cfg.pullBeforePush && remoteBranchExists(stagingRoot, cfg)) {
-    git(stagingRoot, ["pull", "--rebase", "--autostash", cfg.remoteName, cfg.branch], { allowFailure: false });
   }
 
   git(stagingRoot, ["push", "-u", cfg.remoteName, cfg.branch], { allowFailure: false });

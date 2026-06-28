@@ -113,8 +113,8 @@ const repeatSync = run("node", [
 assert.match(repeatSync.stdout, /sync complete/);
 assert.match(repeatSync.stdout, /source graph git status: dirty/);
 assert(
-  fs.readFileSync(gitLog, "utf8").includes("pull --rebase --autostash origin master"),
-  "expected sync to pull with rebase before pushing when enabled"
+  !fs.readFileSync(gitLog, "utf8").includes("pull --rebase --autostash origin master"),
+  "staging snapshot sync should not rebase after committing the copied graph"
 );
 
 run("git", ["clone", remote, clone]);
