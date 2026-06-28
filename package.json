@@ -1,6 +1,6 @@
 {
   "name": "logseq-github-auto-sync",
-  "version": "0.2.9",
+  "version": "0.2.10",
   "description": "Encrypted GitHub sync for Logseq with age encryption and secret scanning",
   "main": "dist/index.html",
   "author": {

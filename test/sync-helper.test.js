@@ -84,6 +84,23 @@ const sync = run("node", [
 assert.match(sync.stdout, /sync complete/);
 assert.match(sync.stdout, /source graph git status: clean/);
 
+const staleLock = path.join(graph, ".logseq-github-auto-sync", "sync-repo", ".git", "index.lock");
+write(staleLock, "stale test lock\n");
+const staleLockSync = run("node", [
+  helper,
+  "sync",
+  "--repo-url", remote,
+  "--branch", "master",
+  "--age-path", age,
+  "--recipients-path", recipients,
+  "--encrypted-tags", "encrypted",
+  "--lfs-threshold-bytes", "64",
+  "--commit-message", "test stale lock cleanup",
+], { cwd: graph });
+assert.match(staleLockSync.stdout, /removed stale git index lock/);
+assert.match(staleLockSync.stdout, /sync complete/);
+assert(!fs.existsSync(staleLock));
+
 const other = path.join(tmp, "other-writer");
 run("git", ["clone", remote, other]);
 run("git", ["config", "user.name", "Other Writer"], { cwd: other });

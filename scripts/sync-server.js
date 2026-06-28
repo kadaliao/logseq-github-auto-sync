@@ -39,6 +39,7 @@ const SETTINGS_PATH = expandHome(process.env.LOGSEQ_GITHUB_SYNC_SETTINGS || "~/.
 const HELPER = path.join(__dirname, "sync-helper.js");
 const MAX_BODY = 1024 * 1024;
 const ALLOWED_COMMANDS = new Set(["sync", "scan"]);
+let syncInProgress = false;
 const ALLOWED_ORIGIN_PATTERNS = [
   /^lsp:\/\//i,
   /^logseq:\/\//i,
@@ -169,7 +170,25 @@ function sendCors(res, req, status, payload) {
   res.end(data);
 }
 
-function run(command, cfg) {
+async function run(command, cfg) {
+  if (command === "sync") {
+    if (syncInProgress) {
+      return {
+        exitCode: 1,
+        stdout: "",
+        stderr: "GitHub Auto Sync is already running. Wait for the current sync to finish."
+      };
+    }
+    syncInProgress = true;
+  }
+  try {
+    return await runHelper(command, cfg);
+  } finally {
+    if (command === "sync") syncInProgress = false;
+  }
+}
+
+function runHelper(command, cfg) {
   return new Promise((resolve) => {
     const nodeCommand = resolveNodeCommand();
     const env = Object.assign({}, process.env, {

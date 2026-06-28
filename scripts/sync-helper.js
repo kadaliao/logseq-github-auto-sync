@@ -191,12 +191,20 @@ function ensureStagingRepo(stagingRoot, cfg, graphRoot) {
 function abortInProgressGitOperation(stagingRoot) {
   const gitDir = path.join(stagingRoot, ".git");
   if (!fs.existsSync(gitDir)) return;
+  clearStaleIndexLock(stagingRoot);
   if (fs.existsSync(path.join(gitDir, "rebase-merge")) || fs.existsSync(path.join(gitDir, "rebase-apply"))) {
     git(stagingRoot, ["rebase", "--abort"], { allowFailure: true });
   }
   if (fs.existsSync(path.join(gitDir, "MERGE_HEAD"))) {
     git(stagingRoot, ["merge", "--abort"], { allowFailure: true });
   }
+}
+
+function clearStaleIndexLock(stagingRoot) {
+  const lockPath = path.join(stagingRoot, ".git", "index.lock");
+  if (!fs.existsSync(lockPath)) return;
+  fs.rmSync(lockPath, { force: true });
+  console.log("removed stale git index lock");
 }
 
 function resetStagingToRemoteBase(stagingRoot, cfg) {

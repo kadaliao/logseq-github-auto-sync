@@ -36,6 +36,9 @@ write(nodeWrapper, `#!/usr/bin/env node
 const fs = require("fs");
 const { spawnSync } = require("child_process");
 fs.appendFileSync(${JSON.stringify(nodeWrapperLog)}, process.argv.slice(2).join(" ") + "\\n");
+if (process.argv.includes("sync")) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 250);
+}
 const result = spawnSync(${JSON.stringify(nodeCommand)}, process.argv.slice(2), {
   cwd: process.cwd(),
   env: process.env,
@@ -163,6 +166,21 @@ setTimeout(() => {}, 1000000);
     const helperArgsLog = fs.readFileSync(nodeWrapperLog, "utf8");
     assert.match(helperArgsLog, /--author-name Kada Liao/);
     assert.match(helperArgsLog, /--author-email kadaliao@gmail\.com/);
+
+    fs.writeFileSync(nodeWrapperLog, "");
+    const [firstSync, secondSync] = await Promise.all([
+      request(port, "POST", "/sync", { settings: { repoUrl: "/tmp/nonexistent.git" } }, { Origin: "lsp://logseq.io" }),
+      request(port, "POST", "/sync", { settings: { repoUrl: "/tmp/nonexistent.git" } }, { Origin: "lsp://logseq.io" }),
+    ]);
+    const syncPayloads = [JSON.parse(firstSync.body), JSON.parse(secondSync.body)];
+    assert(
+      syncPayloads.some((item) => String(item.stderr || "").includes("already running")),
+      "expected concurrent sync requests to be rejected before spawning another helper"
+    );
+    const syncHelperRuns = fs.readFileSync(nodeWrapperLog, "utf8")
+      .split(/\r?\n/)
+      .filter((line) => line.includes(" sync "));
+    assert.strictEqual(syncHelperRuns.length, 1, "expected only one sync helper process at a time");
   } finally {
     child.kill();
     fs.rmSync(tmp, { recursive: true, force: true });
