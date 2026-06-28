@@ -131,9 +131,15 @@ function latestToolbar(uiItems) {
   const { context, fetchCalls, messages, commands, uiItems, providedUis, styles, readyPromise } = root;
   await readyPromise;
   assert(styles.some((item) => item.key === "github-auto-sync-ui"), "expected plugin UI styles");
+  const uiStyle = styles.find((item) => item.key === "github-auto-sync-ui").style;
+  assert(uiStyle.includes(".github-auto-sync-trigger"), "expected toolbar trigger alignment styles");
+  assert(uiStyle.includes("height: 28px"), "expected fixed toolbar trigger height");
+  assert(uiStyle.includes("align-items: center"), "expected centered toolbar icon layout");
   const toolbar = latestToolbar(uiItems);
   assert(toolbar, "expected toolbar item");
   assert(toolbar.item.template.includes("githubAutoSyncMenu"), "expected toolbar menu action");
+  assert(toolbar.item.template.includes("ti ti-cloud-upload"), "expected toolbar icon to use the Logseq icon font");
+  assert(!toolbar.item.template.includes("🔒"), "toolbar icon should not use an emoji that sits below the icon baseline");
   assert(!toolbar.item.template.includes("githubAutoSyncHistory"), "toolbar should not expose history as a second icon");
   assert(!toolbar.item.template.includes("githubAutoSyncSettings"), "toolbar should not expose settings as a third icon");
   assert.strictEqual((toolbar.item.template.match(/data-on-click/g) || []).length, 1, "closed toolbar should expose one clickable icon");
@@ -155,7 +161,7 @@ function latestToolbar(uiItems) {
   const statusToolbar = latestToolbar(uiItems);
   assert(
     statusToolbar.item.template.includes("Current status") &&
-      statusToolbar.item.template.includes("Source graph Git") &&
+      statusToolbar.item.template.includes("Original graph folder") &&
       statusToolbar.item.template.includes("github-auto-sync-status-row"),
     "expected status action to render compact status rows"
   );
@@ -209,9 +215,28 @@ function latestToolbar(uiItems) {
   dirty.context.logseq.model.githubAutoSyncHistory();
   assert(
     latestToolbar(dirty.uiItems).item.template.includes("Recent GitHub Auto Sync history") &&
-      latestToolbar(dirty.uiItems).item.template.includes("⚠") &&
-      latestToolbar(dirty.uiItems).item.template.includes("Source graph Git still has local changes"),
-    "expected dirty source graph Git to be recorded as a warning"
+      latestToolbar(dirty.uiItems).item.template.includes("✅") &&
+      latestToolbar(dirty.uiItems).item.template.includes("GitHub backup includes the current graph snapshot") &&
+      !latestToolbar(dirty.uiItems).item.template.includes("Source graph Git still has local changes"),
+    "expected source graph Git dirtiness to be explained without turning the sync into a warning"
+  );
+
+  const running = createContext({
+    fetchResult: {
+      exitCode: 0,
+      stdout: "source graph git status: clean\nsync complete: committed=true encrypted_files=1 lfs_files=0",
+      stderr: ""
+    }
+  });
+  await running.readyPromise;
+  running.context.logseq.model.githubAutoSyncNow();
+  running.context.logseq.model.githubAutoSyncNow();
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  running.context.logseq.model.githubAutoSyncHistory();
+  assert(
+    !latestToolbar(running.uiItems).item.template.includes("already running") &&
+      !latestToolbar(running.uiItems).item.template.includes("Sync already running"),
+    "expected transient already-running guard to stay out of sync history"
   );
 
   const authored = createContext({

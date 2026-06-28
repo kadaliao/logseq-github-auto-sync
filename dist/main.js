@@ -10,7 +10,7 @@
   const toolbarKey = "github-auto-sync";
   let statusPanel = {
     sync: { icon: "⚪", label: "Not synced yet", detail: "No sync attempt in this Logseq session yet." },
-    source: { icon: "⚪", label: "Source graph Git", detail: "Unknown until the helper runs." }
+    source: { icon: "⚪", label: "Original graph folder", detail: "Unknown until the helper runs." }
   };
 
   // Safe API wrapper with feature detection
@@ -202,11 +202,11 @@
     const output = cleanOutput(result);
     const match = output.match(/source graph git status: ([^\n]+)/);
     if (!match) {
-      return { state: "unknown", icon: "⚪", label: "Source graph Git", detail: "Not reported by helper." };
+      return { state: "unknown", icon: "⚪", label: "Original graph folder", detail: "The helper did not report the original folder Git status." };
     }
     const value = match[1].trim();
     if (value === "clean") {
-      return { state: "clean", icon: "✅", label: "Source graph Git clean", detail: "The original graph Git working tree is clean." };
+      return { state: "clean", icon: "✅", label: "Original graph folder", detail: "GitHub backup includes the current graph snapshot. The original folder Git working tree is clean." };
     }
     if (value.startsWith("dirty")) {
       const tracked = (value.match(/tracked_changes=(\d+)/) || [])[1] || "0";
@@ -214,12 +214,12 @@
       const deleted = (value.match(/deleted=(\d+)/) || [])[1] || "0";
       return {
         state: "dirty",
-        icon: "⚠",
-        label: "Source graph Git still has local changes",
-        detail: `${tracked} tracked, ${untracked} untracked, ${deleted} deleted. GitHub staging sync can still be complete.`
+        icon: "ℹ",
+        label: "Original graph folder has separate Git changes",
+        detail: `GitHub backup includes the current graph snapshot. This plugin does not commit the original folder's own Git repo (${tracked} tracked, ${untracked} untracked, ${deleted} deleted).`
       };
     }
-    return { state: "unknown", icon: "⚠", label: "Source graph Git status unavailable", detail: value };
+    return { state: "unknown", icon: "⚪", label: "Original graph folder", detail: `GitHub backup may still be complete. Original folder Git status: ${value}` };
   }
 
   function rememberLog(status, result) {
@@ -345,7 +345,7 @@
     return (
       '<span class="github-auto-sync-toolbar">' +
       '<a class="button github-auto-sync-trigger" data-on-click="githubAutoSyncMenu" title="GitHub Auto Sync: status and actions">' +
-      '<span class="github-auto-sync-icon">🔒</span>' +
+      '<i class="ti ti-cloud-upload github-auto-sync-icon"></i>' +
       '</a>' +
       (dropdownHtml || "") +
       '</span>'
@@ -412,12 +412,6 @@
   async function syncNow(trigger) {
     if (syncPromise) {
       notify("GitHub Auto Sync is already running.", "warning");
-      rememberHistory({
-        time: new Date().toLocaleString(),
-        trigger: trigger || "manual",
-        status: "warning",
-        summary: "GitHub Auto Sync is already running."
-      });
       statusPanel.sync = { icon: "⚠", label: "Sync already running", detail: "Wait for the current helper run to finish." };
       showMenu();
       return;
@@ -450,11 +444,11 @@
         rememberLog(lastStatus, result);
         const output = cleanOutput(result);
         const sourceStatus = sourceGraphStatus(result);
-        const isWarning = sourceStatus.state === "dirty" || sourceStatus.state === "unknown";
-        const summary = isWarning ? `${sourceStatus.label}: ${sourceStatus.detail}` : syncSummary(result);
+        const isWarning = sourceStatus.state === "unknown";
+        const summary = sourceStatus.state === "dirty" ? sourceStatus.detail : syncSummary(result);
         statusPanel.sync = {
           icon: "✅",
-          label: "GitHub staging sync complete",
+          label: "GitHub backup complete",
           detail: syncSummary(result)
         };
         statusPanel.source = sourceStatus;
@@ -577,9 +571,21 @@
             display: inline-flex;
             align-items: center;
             position: relative;
+            line-height: 1;
+          }
+          .github-auto-sync-trigger {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: 28px;
+            width: 28px;
+            padding: 0;
           }
           .github-auto-sync-icon {
-            font-size: 17px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 19px;
             line-height: 1;
           }
           .github-auto-sync-dropdown {
