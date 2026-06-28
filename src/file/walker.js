@@ -107,8 +107,10 @@ function isLikelyText(buffer) {
  * @returns {boolean}
  */
 function isAgeEncrypted(buffer) {
-  const header = "age-encryption.org/v1";
-  return buffer.subarray(0, header.length).toString("utf8") === header;
+  const binaryHeader = "age-encryption.org/v1";
+  const armorHeader = "-----BEGIN AGE ENCRYPTED FILE-----";
+  const head = buffer.subarray(0, Math.max(binaryHeader.length, armorHeader.length)).toString("utf8");
+  return head.startsWith(binaryHeader) || head.startsWith(armorHeader);
 }
 
 /**

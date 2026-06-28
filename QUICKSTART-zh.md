@@ -120,6 +120,8 @@ tags:: encrypted
 此内容将在 GitHub 上加密。
 ```
 
+加密文件会保存为 ASCII armored age 文本，GitHub 可以把密文按文本显示。
+
 ### 查看状态
 
 ```

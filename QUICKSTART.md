@@ -120,6 +120,8 @@ Or use inline tags:
 This content will be encrypted in GitHub.
 ```
 
+Encrypted files are ASCII-armored age text, so GitHub can show the ciphertext as text.
+
 ### Check Status
 
 ```

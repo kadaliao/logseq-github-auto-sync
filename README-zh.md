@@ -88,6 +88,8 @@ tags:: encrypted
 GitHub Auto Sync: encrypted sync now
 ```
 
+加密后的笔记会保存为 ASCII armored age 文本，因此 GitHub 会把加密的 `.md` 当作文本密文展示，而不是二进制文件。
+
 插件会立刻显示开始提示，并在 helper 完成后显示同步摘要。排查问题时可以使用：
 
 ```

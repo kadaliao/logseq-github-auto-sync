@@ -78,7 +78,7 @@ fs.writeFileSync(${JSON.stringify(fakeLog)}, JSON.stringify(process.argv.slice(2
 const fs = require("fs");
 fs.writeFileSync(${JSON.stringify(fakeAgeLog)}, JSON.stringify(process.argv.slice(2)));
 const outIndex = process.argv.indexOf("-o");
-if (outIndex !== -1) fs.writeFileSync(process.argv[outIndex + 1], "age-encryption.org/v1\\n");
+if (outIndex !== -1) fs.writeFileSync(process.argv[outIndex + 1], "-----BEGIN AGE ENCRYPTED FILE-----\\n");
 `, 0o755);
   const recipients = path.join(tmp, "recipients with spaces.txt");
   const plain = path.join(tmp, "plain input.txt");
@@ -87,8 +87,10 @@ if (outIndex !== -1) fs.writeFileSync(process.argv[outIndex + 1], "age-encryptio
   write(plain, "secret\n");
   ageCrypto.encryptFile(fakeAge, recipients, plain, encrypted);
   const ageArgs = JSON.parse(fs.readFileSync(fakeAgeLog, "utf8"));
-  assert.deepStrictEqual(ageArgs, ["-R", recipients, "-o", `${encrypted}.age-tmp-${ageArgs[3].split(".age-tmp-")[1]}`, plain]);
-  assert(fs.readFileSync(encrypted, "utf8").startsWith("age-encryption.org/v1"));
+  assert.deepStrictEqual(ageArgs, ["-a", "-R", recipients, "-o", `${encrypted}.age-tmp-${ageArgs[4].split(".age-tmp-")[1]}`, plain]);
+  assert(fs.readFileSync(encrypted, "utf8").startsWith("-----BEGIN AGE ENCRYPTED FILE-----"));
+  assert(fileWalker.isAgeEncrypted(Buffer.from("age-encryption.org/v1\nold binary age")));
+  assert(fileWalker.isAgeEncrypted(Buffer.from("-----BEGIN AGE ENCRYPTED FILE-----\nnew armor age")));
 } finally {
   fs.rmSync(tmp, { recursive: true, force: true });
 }

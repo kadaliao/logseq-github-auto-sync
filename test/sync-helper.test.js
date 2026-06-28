@@ -117,12 +117,14 @@ assert(
 
 run("git", ["clone", remote, clone]);
 const encrypted = fs.readFileSync(path.join(clone, "pages", "Secret.md"), "utf8");
-assert(encrypted.startsWith("age-encryption.org/v1"));
+assert(encrypted.startsWith("-----BEGIN AGE ENCRYPTED FILE-----"));
+assert(!fs.readFileSync(path.join(clone, "pages", "Secret.md")).includes(0), "encrypted markdown should stay text-friendly");
 assert(!encrypted.includes(secret));
 const publicNote = fs.readFileSync(path.join(clone, "pages", "Public.md"), "utf8");
 assert(publicNote.includes("hello public note"));
 const encryptedAsset = fs.readFileSync(path.join(clone, "assets", "config.yaml"), "utf8");
-assert(encryptedAsset.startsWith("age-encryption.org/v1"));
+assert(encryptedAsset.startsWith("-----BEGIN AGE ENCRYPTED FILE-----"));
+assert(!fs.readFileSync(path.join(clone, "assets", "config.yaml")).includes(0), "encrypted assets should use text armor");
 assert(!encryptedAsset.includes(secret));
 const lfsPointer = run("git", ["show", "HEAD:assets/large.bin"], { cwd: clone }).stdout;
 assert(lfsPointer.startsWith("version https://git-lfs.github.com/spec/v1"));
@@ -154,7 +156,7 @@ const secondSync = run("node", [
 ], { cwd: graph });
 assert.match(secondSync.stdout, /sync complete/);
 run("git", ["clone", secondRemote, secondClone]);
-assert(fs.readFileSync(path.join(secondClone, "pages", "Secret.md"), "utf8").startsWith("age-encryption.org/v1"));
+assert(fs.readFileSync(path.join(secondClone, "pages", "Secret.md"), "utf8").startsWith("-----BEGIN AGE ENCRYPTED FILE-----"));
 
 const badGraph = path.join(tmp, "bad-graph");
 fs.mkdirSync(path.join(badGraph, "pages"), { recursive: true });

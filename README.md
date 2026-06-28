@@ -85,6 +85,8 @@ Click 🔒 in the toolbar or use Command Palette:
 GitHub Auto Sync: encrypted sync now
 ```
 
+Encrypted notes are stored as ASCII-armored age text, so GitHub can render the encrypted `.md` files as text instead of binary blobs.
+
 The plugin shows a start notification immediately and a completion summary when the helper finishes. For troubleshooting, use:
 
 ```

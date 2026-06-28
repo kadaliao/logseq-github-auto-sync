@@ -57,7 +57,7 @@ function atomicRename(src, dest) {
 function encryptFile(agePath, recipientsPath, inputFile, outputFile) {
   const tmpFile = `${outputFile}.age-tmp-${generateTempSuffix()}`;
   try {
-    const result = spawnSync(agePath, ["-R", recipientsPath, "-o", tmpFile, inputFile], {
+    const result = spawnSync(agePath, ["-a", "-R", recipientsPath, "-o", tmpFile, inputFile], {
       encoding: "utf8",
       stdio: ["ignore", "pipe", "pipe"]
     });

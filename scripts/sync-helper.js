@@ -9,6 +9,7 @@ const { spawnSync } = require("child_process");
 const core = require("../dist/sync-core.js");
 
 const AGE_HEADER = "age-encryption.org/v1";
+const AGE_ARMOR_HEADER = "-----BEGIN AGE ENCRYPTED FILE-----";
 const STATE_DIR = ".logseq-github-auto-sync";
 const STAGING_DIR = "sync-repo";
 const DEFAULT_AUTHOR_NAME = "Logseq GitHub Auto Sync";
@@ -280,7 +281,8 @@ function isLikelyText(buffer) {
 }
 
 function isAgeEncrypted(buffer) {
-  return buffer.subarray(0, AGE_HEADER.length).toString("utf8") === AGE_HEADER;
+  const head = buffer.subarray(0, Math.max(AGE_HEADER.length, AGE_ARMOR_HEADER.length)).toString("utf8");
+  return head.startsWith(AGE_HEADER) || head.startsWith(AGE_ARMOR_HEADER);
 }
 
 function noteFiles(root) {
@@ -307,7 +309,7 @@ function encryptTaggedFiles(stagingRoot, cfg) {
 
     const tmp = `${file}.age-tmp-${generateTempSuffix()}`;
     try {
-      const result = run(cfg.agePath, ["-R", cfg.recipientsPath, "-o", tmp, file], { allowFailure: true });
+      const result = run(cfg.agePath, ["-a", "-R", cfg.recipientsPath, "-o", tmp, file], { allowFailure: true });
       if (result.status !== 0) {
         throw new Error(`age encryption failed: ${result.stderr || result.stdout}`);
       }
@@ -333,7 +335,7 @@ function encryptLikelySecretAssets(stagingRoot, cfg) {
     if (hits.length === 0) continue;
     const tmp = `${file}.age-tmp-${generateTempSuffix()}`;
     try {
-      const result = run(cfg.agePath, ["-R", cfg.recipientsPath, "-o", tmp, file], { allowFailure: true });
+      const result = run(cfg.agePath, ["-a", "-R", cfg.recipientsPath, "-o", tmp, file], { allowFailure: true });
       if (result.status !== 0) {
         throw new Error(`age encryption failed: ${result.stderr || result.stdout}`);
       }
