@@ -90,10 +90,13 @@ GitHub Auto Sync: encrypted sync now
 
 加密后的笔记会保存为 ASCII armored age 文本，因此 GitHub 会把加密的 `.md` 当作文本密文展示，而不是二进制文件。
 
+工具栏里还会显示 🕘 查看最近同步历史，⚙ 打开插件设置。
+
 插件会立刻显示开始提示，并在 helper 完成后显示同步摘要。排查问题时可以使用：
 
 ```
 GitHub Auto Sync: show last sync log
+GitHub Auto Sync: show recent sync history
 GitHub Auto Sync: show encryption status
 ```
 
@@ -108,7 +111,11 @@ GitHub Auto Sync: show encryption status
 | `autoSync` | `false` | 启用定时自动同步 |
 | `syncIntervalMinutes` | `15` | 同步间隔（分钟，最小 1） |
 | `lfsThresholdMb` | `50` | 大于此大小的文件使用 Git LFS |
+| `authorName` | 留空 | Git commit 作者名。留空时依次读取图库仓库的 `git config user.name`、全局 Git 配置 |
+| `authorEmail` | 留空 | Git commit 作者邮箱。留空时依次读取图库仓库的 `git config user.email`、全局 Git 配置 |
 | `showDetailedLogs` | `false` | 在同步弹窗中显示命令输出 |
+
+提交作者设置是可选的。两项都留空时，helper 会优先使用 Logseq 图库目录的 Git 配置，其次使用全局 Git 配置，最后才回退到插件默认值。
 
 ## 敏感信息检测
 

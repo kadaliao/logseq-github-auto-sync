@@ -26,7 +26,9 @@
     lfsThresholdMb: 50,
     secretScanMode: "encrypted-sync-gate",
     syncServerUrl: "http://127.0.0.1:31937",
-    showDetailedLogs: false
+    showDetailedLogs: false,
+    authorName: "",
+    authorEmail: ""
   };
 
   const SECRET_PATTERNS = [
@@ -128,6 +130,8 @@
       lfsThresholdMb: Math.max(1, asNumber(merged.lfsThresholdMb, DEFAULTS.lfsThresholdMb)),
       syncServerUrl: cleanText(merged.syncServerUrl, DEFAULTS.syncServerUrl),
       showDetailedLogs: asBool(merged.showDetailedLogs, DEFAULTS.showDetailedLogs),
+      authorName: cleanText(merged.authorName, DEFAULTS.authorName),
+      authorEmail: cleanText(merged.authorEmail, DEFAULTS.authorEmail),
       secretScanMode: DEFAULTS.secretScanMode
     };
   }

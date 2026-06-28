@@ -6,6 +6,7 @@
   let syncPromise = null;
   let lastStatus = "Not synced yet";
   let lastLog = "No sync log yet.";
+  const syncHistory = [];
 
   // Safe API wrapper with feature detection
   const api = {
@@ -146,6 +147,20 @@
       description: "Message used for automatic commits. A timestamp is appended."
     },
     {
+      key: "authorName",
+      type: "string",
+      default: "",
+      title: "Commit author name",
+      description: "Leave empty to use this graph's git user.name, then global git user.name, then the plugin default."
+    },
+    {
+      key: "authorEmail",
+      type: "string",
+      default: "",
+      title: "Commit author email",
+      description: "Leave empty to use this graph's git user.email, then global git user.email, then the plugin default."
+    },
+    {
       key: "showDetailedLogs",
       type: "boolean",
       default: false,
@@ -181,6 +196,22 @@
   function rememberLog(status, result) {
     const output = cleanOutput(result);
     lastLog = `${status}\n${output || "No command output."}`.slice(0, 4000);
+  }
+
+  function rememberHistory(entry) {
+    syncHistory.unshift(entry);
+    if (syncHistory.length > 10) syncHistory.length = 10;
+  }
+
+  function showHistory() {
+    if (syncHistory.length === 0) {
+      notify("Recent GitHub Auto Sync history\nNo sync attempts in this Logseq session yet.", "info");
+      return;
+    }
+    const lines = syncHistory.map((item, index) =>
+      `${index + 1}. ${item.time} - ${item.trigger} - ${item.status}${item.summary ? ` - ${item.summary}` : ""}`
+    );
+    notify(`Recent GitHub Auto Sync history\n${lines.join("\n")}`, "info");
   }
 
   async function runHelper(command, cfg, options) {
@@ -244,10 +275,22 @@
         lastStatus = `Last encrypted sync: ${new Date().toLocaleString()} (${trigger || "manual"})`;
         rememberLog(lastStatus, result);
         const output = cleanOutput(result);
+        rememberHistory({
+          time: new Date().toLocaleString(),
+          trigger: trigger || "manual",
+          status: "success",
+          summary: syncSummary(result)
+        });
         notify(cfg.showDetailedLogs && output ? `${syncSummary(result)}\n${output}` : syncSummary(result), "success");
       } catch (error) {
         lastStatus = `Last encrypted sync failed: ${new Date().toLocaleString()}`;
         lastLog = `${lastStatus}\n${core.redactGitOutput(error && error.message ? error.message : error)}`.slice(0, 4000);
+        rememberHistory({
+          time: new Date().toLocaleString(),
+          trigger: trigger || "manual",
+          status: "failed",
+          summary: core.redactGitOutput(error && error.message ? error.message : error).slice(0, 180)
+        });
         notify(lastLog, "error");
         throw error;
       } finally {
@@ -296,15 +339,26 @@
       },
       githubAutoSyncSettings() {
         if (typeof logseq.showSettingsUI === "function") logseq.showSettingsUI();
+      },
+      githubAutoSyncHistory() {
+        showHistory();
       }
     });
 
     logseq.App.registerUIItem("toolbar", {
       key: "github-auto-sync",
       template:
+        '<div class="github-auto-sync-toolbar" style="display: inline-flex; align-items: center; gap: 2px">' +
         '<a class="button" data-on-click="githubAutoSyncNow" title="GitHub Auto Sync: encrypted sync now">' +
         '<span class="github-auto-sync-icon" style="font-size: 17px; line-height: 1">🔒</span>' +
-        "</a>"
+        "</a>" +
+        '<a class="button" data-on-click="githubAutoSyncHistory" title="GitHub Auto Sync: recent sync history">' +
+        '<span class="github-auto-sync-icon" style="font-size: 15px; line-height: 1">🕘</span>' +
+        "</a>" +
+        '<a class="button" data-on-click="githubAutoSyncSettings" title="GitHub Auto Sync: open settings">' +
+        '<span class="github-auto-sync-icon" style="font-size: 15px; line-height: 1">⚙</span>' +
+        "</a>" +
+        "</div>"
     });
 
     logseq.App.registerCommandPalette(
@@ -318,6 +372,10 @@
     logseq.App.registerCommandPalette(
       { key: "github-auto-sync-last-log", label: "GitHub Auto Sync: show last sync log" },
       () => showLastLog()
+    );
+    logseq.App.registerCommandPalette(
+      { key: "github-auto-sync-history", label: "GitHub Auto Sync: show recent sync history" },
+      () => showHistory()
     );
     logseq.App.registerCommandPalette(
       { key: "github-auto-sync-settings", label: "GitHub Auto Sync: open settings" },

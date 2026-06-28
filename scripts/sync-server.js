@@ -95,6 +95,8 @@ function normalizeSettings(raw) {
     lfsThresholdMb: Number(pick("lfsThresholdMb", 50)),
     encryptedTags: pick("encryptedTags", "encrypted, secret"),
     commitMessage: pick("commitMessage", "Auto sync Logseq graph"),
+    authorName: pick("authorName", ""),
+    authorEmail: pick("authorEmail", ""),
     pullBeforePush: cfg.pullBeforePush !== false
   };
 }
@@ -114,6 +116,8 @@ function helperArgs(command, cfg) {
     "--commit-message", cfg.commitMessage,
     "--pull-before-push", String(cfg.pullBeforePush)
   ];
+  if (cfg.authorName) args.push("--author-name", cfg.authorName);
+  if (cfg.authorEmail) args.push("--author-email", cfg.authorEmail);
   if (cfg.repoUrl) args.push("--repo-url", cfg.repoUrl);
   return args;
 }

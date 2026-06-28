@@ -7,6 +7,7 @@ const { spawnSync } = require("child_process");
 const pluginRoot = path.resolve(__dirname, "..");
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "logseq-package-test-"));
 const outDir = path.join(tmp, "release output");
+const pkg = require(path.join(pluginRoot, "package.json"));
 
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
@@ -22,9 +23,9 @@ function run(command, args, options = {}) {
 
 try {
   const result = run("node", ["scripts/package-plugin.js", "--out", outDir]);
-  assert.match(result.stdout, /created .+logseq-github-auto-sync-0\.2\.3\.zip/);
+  assert.match(result.stdout, new RegExp(`created .+logseq-github-auto-sync-${pkg.version.replace(/\./g, "\\.")}\\.zip`));
 
-  const zipPath = path.join(outDir, "logseq-github-auto-sync-0.2.3.zip");
+  const zipPath = path.join(outDir, `logseq-github-auto-sync-${pkg.version}.zip`);
   assert(fs.existsSync(zipPath), "expected release zip to exist");
 
   const listing = run("unzip", ["-Z1", zipPath]).stdout.trim().split(/\r?\n/).sort();

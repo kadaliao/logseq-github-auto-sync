@@ -119,7 +119,9 @@ function normalizeOptions(raw) {
     recipientsPath: raw.recipientsPath || "~/.config/logseq-github-auto-sync/recipients.txt",
     identityPath: raw.identityPath || "~/.config/logseq-github-auto-sync/identity.txt",
     largeFileStorage: raw.largeFileStorage == null ? true : raw.largeFileStorage,
-    lfsThresholdMb: raw.lfsThresholdMb || 50
+    lfsThresholdMb: raw.lfsThresholdMb || 50,
+    authorName: raw.authorName || "",
+    authorEmail: raw.authorEmail || ""
   });
   cfg.agePath = expandHome(cfg.agePath);
   cfg.recipientsPath = expandHome(cfg.recipientsPath);
@@ -173,8 +175,8 @@ function ensureStagingRepo(stagingRoot, cfg, graphRoot) {
   }
 
   abortInProgressGitOperation(stagingRoot);
-  git(stagingRoot, ["config", "user.name", gitConfigOrDefault(graphRoot, "user.name", DEFAULT_AUTHOR_NAME)], { allowFailure: false });
-  git(stagingRoot, ["config", "user.email", gitConfigOrDefault(graphRoot, "user.email", DEFAULT_AUTHOR_EMAIL)], { allowFailure: false });
+  git(stagingRoot, ["config", "user.name", resolveCommitAuthorName(cfg, graphRoot)], { allowFailure: false });
+  git(stagingRoot, ["config", "user.email", resolveCommitAuthorEmail(cfg, graphRoot)], { allowFailure: false });
 
   const remote = git(stagingRoot, ["remote", "get-url", cfg.remoteName], { allowFailure: true });
   if (remote.status !== 0 || !remote.stdout.trim()) {
@@ -217,6 +219,14 @@ function gitConfigOrDefault(repoRoot, key, fallback) {
   const global = run(GIT, ["config", "--global", key], { allowFailure: true });
   if (global.status === 0 && global.stdout.trim()) return global.stdout.trim();
   return fallback;
+}
+
+function resolveCommitAuthorName(cfg, graphRoot) {
+  return cfg.authorName || gitConfigOrDefault(graphRoot, "user.name", DEFAULT_AUTHOR_NAME);
+}
+
+function resolveCommitAuthorEmail(cfg, graphRoot) {
+  return cfg.authorEmail || gitConfigOrDefault(graphRoot, "user.email", DEFAULT_AUTHOR_EMAIL);
 }
 
 function walkFiles(root, predicate) {
@@ -512,6 +522,7 @@ function commandSync(cfg) {
 
 function commandScan(cfg) {
   const graphRoot = getGraphRoot();
+  console.log(`commit author: ${resolveCommitAuthorName(cfg, graphRoot)} <${resolveCommitAuthorEmail(cfg, graphRoot)}>`);
   const tagged = scanTaggedFiles(graphRoot, cfg.encryptedTags);
   const hits = scanLikelySecrets(graphRoot, {
     onlyUntaggedNotes: true,

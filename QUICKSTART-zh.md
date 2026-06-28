@@ -75,7 +75,8 @@ node ~/.logseq/plugins/logseq-github-auto-sync/scripts/sync-server.js
 2. **加密标签**：`encrypted, secret`（默认）
 3. **Age 路径**：`age`（如果 age 不在 PATH 中，也可以填绝对路径）
 4. **Recipients 路径**：`~/.config/logseq-github-auto-sync/recipients.txt`
-5. **启用自动同步**：可选（默认：关闭）
+5. **Commit author name/email**：可选。留空时自动读取图库仓库的 Git 配置，也可以手动填写你想要的作者信息。
+6. **启用自动同步**：可选（默认：关闭）
 
 ### 7. 首次同步
 
@@ -96,6 +97,8 @@ GitHub Auto Sync: encrypted sync now
 ```
 
 同步会立刻显示开始提示。默认完成弹窗保持简短；需要排查时，在设置中打开 **Show detailed sync logs**，弹窗会显示命令输出。
+
+工具栏里还提供 🕘 查看最近同步历史，⚙ 打开插件设置。
 
 ### 自动同步
 
@@ -137,9 +140,10 @@ GitHub Auto Sync: show encryption status
 
 ```
 GitHub Auto Sync: show last sync log
+GitHub Auto Sync: show recent sync history
 ```
 
-显示最近一次同步结果和已脱敏的 helper 输出。
+显示最近一次同步结果和已脱敏的 helper 输出。最近同步历史会列出本次 Logseq 会话中的最近几次同步尝试。
 
 ## 故障排查
 

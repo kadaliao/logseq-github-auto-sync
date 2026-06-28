@@ -122,6 +122,8 @@ assert(!fs.readFileSync(path.join(clone, "pages", "Secret.md")).includes(0), "en
 assert(!encrypted.includes(secret));
 const publicNote = fs.readFileSync(path.join(clone, "pages", "Public.md"), "utf8");
 assert(publicNote.includes("hello public note"));
+const fallbackAuthor = run("git", ["log", "-1", "--format=%an <%ae>%n%cn <%ce>"], { cwd: clone }).stdout.trim();
+assert.strictEqual(fallbackAuthor, "Test User <test@example.invalid>\nTest User <test@example.invalid>");
 const encryptedAsset = fs.readFileSync(path.join(clone, "assets", "config.yaml"), "utf8");
 assert(encryptedAsset.startsWith("-----BEGIN AGE ENCRYPTED FILE-----"));
 assert(!fs.readFileSync(path.join(clone, "assets", "config.yaml")).includes(0), "encrypted assets should use text armor");
@@ -157,6 +159,26 @@ const secondSync = run("node", [
 assert.match(secondSync.stdout, /sync complete/);
 run("git", ["clone", secondRemote, secondClone]);
 assert(fs.readFileSync(path.join(secondClone, "pages", "Secret.md"), "utf8").startsWith("-----BEGIN AGE ENCRYPTED FILE-----"));
+
+const authorRemote = path.join(tmp, "author-remote.git");
+const authorClone = path.join(tmp, "author-clone");
+run("git", ["init", "--bare", authorRemote]);
+const authorSync = run("node", [
+  helper,
+  "sync",
+  "--repo-url", authorRemote,
+  "--branch", "master",
+  "--age-path", age,
+  "--recipients-path", recipients,
+  "--encrypted-tags", "encrypted",
+  "--commit-message", "test encrypted sync with author",
+  "--author-name", "Kada Liao",
+  "--author-email", "kadaliao@gmail.com",
+], { cwd: graph });
+assert.match(authorSync.stdout, /sync complete/);
+run("git", ["clone", authorRemote, authorClone]);
+const configuredAuthor = run("git", ["log", "-1", "--format=%an <%ae>%n%cn <%ce>"], { cwd: authorClone }).stdout.trim();
+assert.strictEqual(configuredAuthor, "Kada Liao <kadaliao@gmail.com>\nKada Liao <kadaliao@gmail.com>");
 
 const badGraph = path.join(tmp, "bad-graph");
 fs.mkdirSync(path.join(badGraph, "pages"), { recursive: true });

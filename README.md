@@ -87,10 +87,13 @@ GitHub Auto Sync: encrypted sync now
 
 Encrypted notes are stored as ASCII-armored age text, so GitHub can render the encrypted `.md` files as text instead of binary blobs.
 
+The toolbar also includes 🕘 for recent sync history and ⚙ for plugin settings.
+
 The plugin shows a start notification immediately and a completion summary when the helper finishes. For troubleshooting, use:
 
 ```
 GitHub Auto Sync: show last sync log
+GitHub Auto Sync: show recent sync history
 GitHub Auto Sync: show encryption status
 ```
 
@@ -105,7 +108,11 @@ GitHub Auto Sync: show encryption status
 | `autoSync` | `false` | Enable timed auto-sync |
 | `syncIntervalMinutes` | `15` | Sync interval (min: 1) |
 | `lfsThresholdMb` | `50` | Files ≥ this size use Git LFS |
+| `authorName` | empty | Commit author name. Empty means load from the graph repo's `git config user.name`, then global git config |
+| `authorEmail` | empty | Commit author email. Empty means load from the graph repo's `git config user.email`, then global git config |
 | `showDetailedLogs` | `false` | Show command output in sync popups |
+
+Commit author settings are optional. If both fields are empty, the helper uses the Logseq graph's Git config first, then your global Git config, and finally falls back to the plugin default.
 
 ## Secret Detection
 

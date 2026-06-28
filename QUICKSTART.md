@@ -75,7 +75,8 @@ In the plugin settings:
 2. **Encrypted tags**: `encrypted, secret` (default)
 3. **Age path**: `age` (or an absolute path if age is not in PATH)
 4. **Recipients path**: `~/.config/logseq-github-auto-sync/recipients.txt`
-5. **Enable auto-sync**: Optional (default: off)
+5. **Commit author name/email**: Optional. Leave empty to load the graph repo's Git config, or set your preferred author explicitly.
+6. **Enable auto-sync**: Optional (default: off)
 
 ### 7. First Sync
 
@@ -96,6 +97,8 @@ GitHub Auto Sync: encrypted sync now
 ```
 
 Sync shows a start notification immediately. By default, completion popups stay short; enable **Show detailed sync logs** in settings when you want command output in the popup.
+
+The toolbar also has 🕘 for recent sync history and ⚙ for plugin settings.
 
 ### Auto Sync
 
@@ -137,9 +140,10 @@ Shows:
 
 ```
 GitHub Auto Sync: show last sync log
+GitHub Auto Sync: show recent sync history
 ```
 
-Shows the most recent sync result with redacted helper output.
+Shows the most recent sync result with redacted helper output. Recent history lists the latest sync attempts from this Logseq session.
 
 ## Troubleshooting
 

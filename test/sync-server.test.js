@@ -11,6 +11,8 @@ const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "logseq-server-test-"));
 const graph = path.join(tmp, "graph");
 const port = 32000 + Math.floor(Math.random() * 2000);
 const nodeProbePort = port + 2000;
+const nodeWrapperLog = path.join(tmp, "node-wrapper.log");
+const nodeWrapper = path.join(tmp, "node-wrapper.js");
 const nodeCommand = fs.existsSync("/opt/homebrew/bin/node")
   ? "/opt/homebrew/bin/node"
   : fs.existsSync(process.execPath)
@@ -29,6 +31,22 @@ function write(file, content) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, content);
 }
+
+write(nodeWrapper, `#!/usr/bin/env node
+const fs = require("fs");
+const { spawnSync } = require("child_process");
+fs.appendFileSync(${JSON.stringify(nodeWrapperLog)}, process.argv.slice(2).join(" ") + "\\n");
+const result = spawnSync(${JSON.stringify(nodeCommand)}, process.argv.slice(2), {
+  cwd: process.cwd(),
+  env: process.env,
+  encoding: "utf8",
+  stdio: ["ignore", "pipe", "pipe"]
+});
+if (result.stdout) process.stdout.write(result.stdout);
+if (result.stderr) process.stderr.write(result.stderr);
+process.exit(result.status == null ? 1 : result.status);
+`);
+fs.chmodSync(nodeWrapper, 0o755);
 
 function waitForServer(child) {
   return new Promise((resolve, reject) => {
@@ -112,6 +130,7 @@ setTimeout(() => {}, 1000000);
     env: Object.assign({}, process.env, {
       LOGSEQ_GITHUB_SYNC_GRAPH: graph,
       LOGSEQ_GITHUB_SYNC_PORT: String(port),
+      LOGSEQ_GITHUB_SYNC_NODE: nodeWrapper,
     }),
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -131,6 +150,19 @@ setTimeout(() => {}, 1000000);
     assert.strictEqual(allowed.headers["access-control-allow-origin"], "lsp://logseq.io");
     const payload = JSON.parse(allowed.body);
     assert.strictEqual(payload.exitCode, 0);
+
+    const authorScan = await request(port, "POST", "/scan", {
+      settings: {
+        authorName: "Kada Liao",
+        authorEmail: "kadaliao@gmail.com",
+      },
+    }, { Origin: "lsp://logseq.io" });
+    assert.strictEqual(authorScan.statusCode, 200);
+    const authorPayload = JSON.parse(authorScan.body);
+    assert.strictEqual(authorPayload.exitCode, 0);
+    const helperArgsLog = fs.readFileSync(nodeWrapperLog, "utf8");
+    assert.match(helperArgsLog, /--author-name Kada Liao/);
+    assert.match(helperArgsLog, /--author-email kadaliao@gmail\.com/);
   } finally {
     child.kill();
     fs.rmSync(tmp, { recursive: true, force: true });
