@@ -7,7 +7,7 @@
   let lastStatus = "Not synced yet";
   let lastLog = "No sync log yet.";
   const syncHistory = [];
-  const panelKey = "github-auto-sync-panel";
+  const toolbarKey = "github-auto-sync";
   let statusPanel = {
     sync: { icon: "⚪", label: "Not synced yet", detail: "No sync attempt in this Logseq session yet." },
     source: { icon: "⚪", label: "Source graph Git", detail: "Unknown until the helper runs." }
@@ -332,30 +332,32 @@
     }
 
     const template =
-      `<main class="github-auto-sync-popover github-auto-sync-popover-${escapeHtml(view)}">` +
+      `<span class="github-auto-sync-dropdown github-auto-sync-dropdown-${escapeHtml(view)}">` +
       `<header><h1>${escapeHtml(title)}</h1><button data-on-click="githubAutoSyncClosePanel" aria-label="Close">×</button></header>` +
       body +
       footer +
-      '</main>';
+      '</span>';
 
-    if (typeof logseq.provideUI === "function") logseq.provideUI({ key: panelKey, template });
-    if (typeof logseq.setMainUIInlineStyle === "function") {
-      logseq.setMainUIInlineStyle({
-        position: "fixed",
-        top: "44px",
-        right: "12px",
-        width: "320px",
-        maxWidth: "calc(100vw - 24px)",
-        height: "auto",
-        maxHeight: "calc(100vh - 64px)",
-        overflow: "visible",
-        background: "transparent",
-        boxShadow: "none",
-        zIndex: 9999,
-        pointerEvents: "auto"
-      });
-    }
-    if (typeof logseq.showMainUI === "function") logseq.showMainUI({ autoFocus: false });
+    renderToolbar(template);
+  }
+
+  function toolbarTemplate(dropdownHtml) {
+    return (
+      '<span class="github-auto-sync-toolbar">' +
+      '<a class="button github-auto-sync-trigger" data-on-click="githubAutoSyncMenu" title="GitHub Auto Sync: status and actions">' +
+      '<span class="github-auto-sync-icon">🔒</span>' +
+      '</a>' +
+      (dropdownHtml || "") +
+      '</span>'
+    );
+  }
+
+  function renderToolbar(dropdownHtml) {
+    if (typeof logseq?.App?.registerUIItem !== "function") return;
+    logseq.App.registerUIItem("toolbar", {
+      key: toolbarKey,
+      template: toolbarTemplate(dropdownHtml)
+    });
   }
 
   function showHistory() {
@@ -563,7 +565,7 @@
         showHistory();
       },
       githubAutoSyncClosePanel() {
-        if (typeof logseq.hideMainUI === "function") logseq.hideMainUI({ restoreEditingCursor: true });
+        renderToolbar("");
       }
     });
 
@@ -571,8 +573,21 @@
       logseq.provideStyle({
         key: "github-auto-sync-ui",
         style: `
-          .github-auto-sync-popover {
+          .github-auto-sync-toolbar {
+            display: inline-flex;
+            align-items: center;
+            position: relative;
+          }
+          .github-auto-sync-icon {
+            font-size: 17px;
+            line-height: 1;
+          }
+          .github-auto-sync-dropdown {
             box-sizing: border-box;
+            position: fixed;
+            top: 48px;
+            right: 12px;
+            z-index: 9999;
             width: 320px;
             max-width: calc(100vw - 24px);
             max-height: calc(100vh - 64px);
@@ -586,25 +601,25 @@
             font-size: 13px;
             line-height: 1.35;
           }
-          .github-auto-sync-popover header {
+          .github-auto-sync-dropdown header {
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 8px;
             margin-bottom: 10px;
           }
-          .github-auto-sync-popover h1,
-          .github-auto-sync-popover h2 {
+          .github-auto-sync-dropdown h1,
+          .github-auto-sync-dropdown h2 {
             margin: 0;
             font-size: 14px;
             font-weight: 650;
             letter-spacing: 0;
           }
-          .github-auto-sync-popover h2 {
+          .github-auto-sync-dropdown h2 {
             margin-bottom: 8px;
             color: var(--ls-secondary-text-color, #5a5a5a);
           }
-          .github-auto-sync-popover header button {
+          .github-auto-sync-dropdown header button {
             border: 0;
             background: transparent;
             color: inherit;
@@ -613,7 +628,7 @@
             padding: 0 2px;
             cursor: pointer;
           }
-          .github-auto-sync-popover section {
+          .github-auto-sync-dropdown section {
             margin: 10px 0;
           }
           .github-auto-sync-menu-list,
@@ -683,7 +698,7 @@
           .github-auto-sync-history-row {
             margin-bottom: 6px;
           }
-          .github-auto-sync-popover footer {
+          .github-auto-sync-dropdown footer {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
@@ -709,13 +724,10 @@
       });
     }
 
-    logseq.App.registerUIItem("toolbar", {
-      key: "github-auto-sync",
-      template:
-        '<a class="button" data-on-click="githubAutoSyncMenu" title="GitHub Auto Sync: status and actions">' +
-        '<span class="github-auto-sync-icon" style="font-size: 17px; line-height: 1">🔒</span>' +
-        "</a>"
-    });
+    if (typeof logseq.hideMainUI === "function") {
+      logseq.hideMainUI({ restoreEditingCursor: false });
+    }
+    renderToolbar("");
 
     logseq.App.registerCommandPalette(
       { key: "github-auto-sync-now", label: "GitHub Auto Sync: encrypted sync now" },

@@ -15,6 +15,8 @@ function createContext(overrides = {}) {
   const styles = [];
   let readyPromise;
   let mainUIVisible = false;
+  let showMainUICalls = 0;
+  let hideMainUICalls = 0;
   const ctx = {
     console,
     URL,
@@ -81,9 +83,11 @@ function createContext(overrides = {}) {
         this.mainUIStyle = style;
       },
       showMainUI() {
+        showMainUICalls += 1;
         mainUIVisible = true;
       },
       hideMainUI() {
+        hideMainUICalls += 1;
         mainUIVisible = false;
       },
       showSettingsUI() {
@@ -112,42 +116,47 @@ function createContext(overrides = {}) {
     providedUis,
     styles,
     get mainUIVisible() { return mainUIVisible; },
+    get showMainUICalls() { return showMainUICalls; },
+    get hideMainUICalls() { return hideMainUICalls; },
     get readyPromise() { return readyPromise; }
   };
 }
 
+function latestToolbar(uiItems) {
+  return [...uiItems].reverse().find((item) => item.type === "toolbar" && item.item.key === "github-auto-sync");
+}
+
 (async () => {
-  const { context, fetchCalls, messages, commands, uiItems, providedUis, styles, readyPromise } = createContext();
+  const root = createContext();
+  const { context, fetchCalls, messages, commands, uiItems, providedUis, styles, readyPromise } = root;
   await readyPromise;
   assert(styles.some((item) => item.key === "github-auto-sync-ui"), "expected plugin UI styles");
-  const toolbar = uiItems.find((item) => item.type === "toolbar" && item.item.key === "github-auto-sync");
+  const toolbar = latestToolbar(uiItems);
   assert(toolbar, "expected toolbar item");
   assert(toolbar.item.template.includes("githubAutoSyncMenu"), "expected toolbar menu action");
   assert(!toolbar.item.template.includes("githubAutoSyncHistory"), "toolbar should not expose history as a second icon");
   assert(!toolbar.item.template.includes("githubAutoSyncSettings"), "toolbar should not expose settings as a third icon");
-  assert.strictEqual((toolbar.item.template.match(/data-on-click/g) || []).length, 1, "toolbar should expose one clickable icon");
+  assert.strictEqual((toolbar.item.template.match(/data-on-click/g) || []).length, 1, "closed toolbar should expose one clickable icon");
 
   context.logseq.model.githubAutoSyncMenu();
-  assert.strictEqual(providedUis.length, 1, "expected toolbar click to render a menu");
-  assert(providedUis[0].template.includes("github-auto-sync-popover-menu"), "expected toolbar click to render a compact menu");
-  assert(!providedUis[0].template.includes("Current status"), "toolbar menu should not render the full status panel");
-  assert(!providedUis[0].template.includes("github-auto-sync-status-card"), "toolbar menu should not render status cards");
-  assert(providedUis[0].template.includes("Sync now"), "expected menu sync action");
-  assert(providedUis[0].template.includes("Show status"), "expected menu status action");
-  assert(providedUis[0].template.includes("Recent history"), "expected menu history action");
-  assert(providedUis[0].template.includes("Open settings"), "expected menu settings action");
-  assert.strictEqual(context.logseq.mainUIStyle.position, "fixed", "expected popover to be fixed");
-  assert.strictEqual(context.logseq.mainUIStyle.width, "320px", "expected compact popover width");
-  assert.strictEqual(context.logseq.mainUIStyle.maxWidth, "calc(100vw - 24px)", "expected mobile-safe popover width");
-  assert.strictEqual(context.logseq.mainUIStyle.height, "auto", "expected popover not to fill page height");
-  assert.strictEqual(context.logseq.mainUIStyle.background, "transparent", "expected transparent outer main UI");
-  assert.strictEqual(context.logseq.mainUIStyle.pointerEvents, "auto", "expected popover actions to remain clickable");
+  const menuToolbar = latestToolbar(uiItems);
+  assert.strictEqual(providedUis.length, 0, "toolbar menu should not use Logseq main UI");
+  assert.strictEqual(root.showMainUICalls, 0, "toolbar menu should not open Logseq main UI");
+  assert.strictEqual(context.logseq.mainUIStyle, undefined, "toolbar menu should not style Logseq main UI");
+  assert(menuToolbar.item.template.includes("github-auto-sync-dropdown-menu"), "expected toolbar click to render a compact toolbar dropdown");
+  assert(!menuToolbar.item.template.includes("Current status"), "toolbar menu should not render the full status panel");
+  assert(!menuToolbar.item.template.includes("github-auto-sync-status-card"), "toolbar menu should not render status cards");
+  assert(menuToolbar.item.template.includes("Sync now"), "expected menu sync action");
+  assert(menuToolbar.item.template.includes("Show status"), "expected menu status action");
+  assert(menuToolbar.item.template.includes("Recent history"), "expected menu history action");
+  assert(menuToolbar.item.template.includes("Open settings"), "expected menu settings action");
 
   context.logseq.model.githubAutoSyncStatus();
+  const statusToolbar = latestToolbar(uiItems);
   assert(
-    providedUis.at(-1).template.includes("Current status") &&
-      providedUis.at(-1).template.includes("Source graph Git") &&
-      providedUis.at(-1).template.includes("github-auto-sync-status-row"),
+    statusToolbar.item.template.includes("Current status") &&
+      statusToolbar.item.template.includes("Source graph Git") &&
+      statusToolbar.item.template.includes("github-auto-sync-status-row"),
     "expected status action to render compact status rows"
   );
 
@@ -181,7 +190,9 @@ function createContext(overrides = {}) {
   const historyCommand = commands.find((item) => item.command.key === "github-auto-sync-history");
   historyCommand.handler();
   assert(
-    providedUis.some((item) => item.template.includes("Recent GitHub Auto Sync history") && item.template.includes("✅") && item.template.includes("toolbar")),
+    latestToolbar(uiItems).item.template.includes("Recent GitHub Auto Sync history") &&
+      latestToolbar(uiItems).item.template.includes("✅") &&
+      latestToolbar(uiItems).item.template.includes("toolbar"),
     "expected sync history panel to show successful recent sync entries"
   );
 
@@ -197,11 +208,9 @@ function createContext(overrides = {}) {
   await new Promise((resolve) => setTimeout(resolve, 20));
   dirty.context.logseq.model.githubAutoSyncHistory();
   assert(
-    dirty.providedUis.some((item) =>
-      item.template.includes("Recent GitHub Auto Sync history") &&
-      item.template.includes("⚠") &&
-      item.template.includes("Source graph Git still has local changes")
-    ),
+    latestToolbar(dirty.uiItems).item.template.includes("Recent GitHub Auto Sync history") &&
+      latestToolbar(dirty.uiItems).item.template.includes("⚠") &&
+      latestToolbar(dirty.uiItems).item.template.includes("Source graph Git still has local changes"),
     "expected dirty source graph Git to be recorded as a warning"
   );
 
@@ -233,7 +242,9 @@ function createContext(overrides = {}) {
   await new Promise((resolve) => setTimeout(resolve, 20));
   warning.context.logseq.model.githubAutoSyncHistory();
   assert(
-    warning.providedUis.some((item) => item.template.includes("Recent GitHub Auto Sync history") && item.template.includes("⚠") && item.template.includes("GitHub repo URL")),
+    latestToolbar(warning.uiItems).item.template.includes("Recent GitHub Auto Sync history") &&
+      latestToolbar(warning.uiItems).item.template.includes("⚠") &&
+      latestToolbar(warning.uiItems).item.template.includes("GitHub repo URL"),
     "expected sync history panel to distinguish warning entries"
   );
 
