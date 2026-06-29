@@ -138,7 +138,7 @@ function latestToolbar(uiItems) {
   const toolbar = latestToolbar(uiItems);
   assert(toolbar, "expected toolbar item");
   assert(toolbar.item.template.includes("githubAutoSyncMenu"), "expected toolbar menu action");
-  assert(toolbar.item.template.includes("ti ti-cloud-upload"), "expected toolbar icon to use the Logseq icon font");
+  assert(toolbar.item.template.includes("ti ti-brand-github"), "expected toolbar icon to use a centered Logseq icon font glyph");
   assert(!toolbar.item.template.includes("🔒"), "toolbar icon should not use an emoji that sits below the icon baseline");
   assert(!toolbar.item.template.includes("githubAutoSyncHistory"), "toolbar should not expose history as a second icon");
   assert(!toolbar.item.template.includes("githubAutoSyncSettings"), "toolbar should not expose settings as a third icon");
@@ -161,9 +161,10 @@ function latestToolbar(uiItems) {
   const statusToolbar = latestToolbar(uiItems);
   assert(
     statusToolbar.item.template.includes("Current status") &&
-      statusToolbar.item.template.includes("Original graph folder") &&
-      statusToolbar.item.template.includes("github-auto-sync-status-row"),
-    "expected status action to render compact status rows"
+      statusToolbar.item.template.includes("github-auto-sync-status-row") &&
+      !statusToolbar.item.template.includes("Original graph folder") &&
+      !statusToolbar.item.template.includes("separate Git changes"),
+    "expected status action to render the backup status without source graph Git noise"
   );
 
   const fetchesBeforeSync = fetchCalls.length;
@@ -216,9 +217,10 @@ function latestToolbar(uiItems) {
   assert(
     latestToolbar(dirty.uiItems).item.template.includes("Recent GitHub Auto Sync history") &&
       latestToolbar(dirty.uiItems).item.template.includes("✅") &&
-      latestToolbar(dirty.uiItems).item.template.includes("GitHub backup includes the current graph snapshot") &&
-      !latestToolbar(dirty.uiItems).item.template.includes("Source graph Git still has local changes"),
-    "expected source graph Git dirtiness to be explained without turning the sync into a warning"
+      latestToolbar(dirty.uiItems).item.template.includes("GitHub staging sync complete") &&
+      !latestToolbar(dirty.uiItems).item.template.includes("Source graph Git still has local changes") &&
+      !latestToolbar(dirty.uiItems).item.template.includes("separate Git changes"),
+    "expected source graph Git dirtiness to stay out of normal sync history"
   );
 
   const running = createContext({

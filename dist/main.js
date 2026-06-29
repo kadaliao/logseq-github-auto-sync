@@ -215,8 +215,8 @@
       return {
         state: "dirty",
         icon: "ℹ",
-        label: "Original graph folder has separate Git changes",
-        detail: `GitHub backup includes the current graph snapshot. This plugin does not commit the original folder's own Git repo (${tracked} tracked, ${untracked} untracked, ${deleted} deleted).`
+        label: "Original graph folder has local edits",
+        detail: `Original graph Git status: ${tracked} tracked, ${untracked} untracked, ${deleted} deleted.`
       };
     }
     return { state: "unknown", icon: "⚪", label: "Original graph folder", detail: `GitHub backup may still be complete. Original folder Git status: ${value}` };
@@ -290,13 +290,6 @@
       `<small>${escapeHtml(statusPanel.sync.detail)}</small>`,
       '</span>',
       '</div>',
-      '<div class="github-auto-sync-status-row">',
-      `<span class="github-auto-sync-status-icon">${escapeHtml(statusPanel.source.icon)}</span>`,
-      '<span class="github-auto-sync-status-copy">',
-      `<strong>${escapeHtml(statusPanel.source.label)}</strong>`,
-      `<small>${escapeHtml(statusPanel.source.detail)}</small>`,
-      '</span>',
-      '</div>',
       '</div>'
     ].join("");
   }
@@ -345,7 +338,7 @@
     return (
       '<span class="github-auto-sync-toolbar">' +
       '<a class="button github-auto-sync-trigger" data-on-click="githubAutoSyncMenu" title="GitHub Auto Sync: status and actions">' +
-      '<i class="ti ti-cloud-upload github-auto-sync-icon"></i>' +
+      '<i class="ti ti-brand-github github-auto-sync-icon"></i>' +
       '</a>' +
       (dropdownHtml || "") +
       '</span>'
@@ -445,7 +438,7 @@
         const output = cleanOutput(result);
         const sourceStatus = sourceGraphStatus(result);
         const isWarning = sourceStatus.state === "unknown";
-        const summary = sourceStatus.state === "dirty" ? sourceStatus.detail : syncSummary(result);
+        const summary = syncSummary(result);
         statusPanel.sync = {
           icon: "✅",
           label: "GitHub backup complete",
@@ -585,7 +578,7 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 19px;
+            font-size: 18px;
             line-height: 1;
           }
           .github-auto-sync-dropdown {
