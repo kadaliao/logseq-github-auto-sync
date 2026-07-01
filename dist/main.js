@@ -242,7 +242,7 @@
 
   function historyIcon(status) {
     if (status === "success") return "✅";
-    if (status === "warning") return "⚠";
+    if (status === "warning") return "⚠️";
     if (status === "failed") return "❌";
     return "•";
   }
@@ -437,7 +437,6 @@
         rememberLog(lastStatus, result);
         const output = cleanOutput(result);
         const sourceStatus = sourceGraphStatus(result);
-        const isWarning = sourceStatus.state === "unknown";
         const summary = syncSummary(result);
         statusPanel.sync = {
           icon: "✅",
@@ -448,10 +447,10 @@
         rememberHistory({
           time: new Date().toLocaleString(),
           trigger: trigger || "manual",
-          status: isWarning ? "warning" : "success",
+          status: "success",
           summary
         });
-        notify(cfg.showDetailedLogs && output ? `${syncSummary(result)}\n${output}` : syncSummary(result), isWarning ? "warning" : "success");
+        notify(cfg.showDetailedLogs && output ? `${syncSummary(result)}\n${output}` : syncSummary(result), "success");
         showMenu();
       } catch (error) {
         lastStatus = `Last encrypted sync failed: ${new Date().toLocaleString()}`;
@@ -561,25 +560,14 @@
         key: "github-auto-sync-ui",
         style: `
           .github-auto-sync-toolbar {
-            display: inline-flex;
-            align-items: center;
+            display: contents;
             position: relative;
-            line-height: 1;
           }
           .github-auto-sync-trigger {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            height: 28px;
-            width: 28px;
-            padding: 0;
+            position: relative;
           }
           .github-auto-sync-icon {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
             font-size: 18px;
-            line-height: 1;
           }
           .github-auto-sync-dropdown {
             box-sizing: border-box;

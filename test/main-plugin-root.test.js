@@ -132,13 +132,13 @@ function latestToolbar(uiItems) {
   await readyPromise;
   assert(styles.some((item) => item.key === "github-auto-sync-ui"), "expected plugin UI styles");
   const uiStyle = styles.find((item) => item.key === "github-auto-sync-ui").style;
-  assert(uiStyle.includes(".github-auto-sync-trigger"), "expected toolbar trigger alignment styles");
-  assert(uiStyle.includes("height: 28px"), "expected fixed toolbar trigger height");
-  assert(uiStyle.includes("align-items: center"), "expected centered toolbar icon layout");
+  assert(uiStyle.includes("display: contents"), "toolbar wrapper should not change Logseq toolbar item alignment");
+  assert(!uiStyle.includes("height: 28px"), "toolbar trigger should use Logseq's native button height");
+  assert(!uiStyle.includes("width: 28px"), "toolbar trigger should use Logseq's native button width");
   const toolbar = latestToolbar(uiItems);
   assert(toolbar, "expected toolbar item");
   assert(toolbar.item.template.includes("githubAutoSyncMenu"), "expected toolbar menu action");
-  assert(toolbar.item.template.includes("ti ti-brand-github"), "expected toolbar icon to use a centered Logseq icon font glyph");
+  assert(toolbar.item.template.includes("ti ti-brand-github"), "expected toolbar icon to match other Logseq toolbar icon markup");
   assert(!toolbar.item.template.includes("🔒"), "toolbar icon should not use an emoji that sits below the icon baseline");
   assert(!toolbar.item.template.includes("githubAutoSyncHistory"), "toolbar should not expose history as a second icon");
   assert(!toolbar.item.template.includes("githubAutoSyncSettings"), "toolbar should not expose settings as a third icon");
@@ -196,11 +196,30 @@ function latestToolbar(uiItems) {
 
   const historyCommand = commands.find((item) => item.command.key === "github-auto-sync-history");
   historyCommand.handler();
+  const successHistoryTemplate = latestToolbar(uiItems).item.template;
   assert(
-    latestToolbar(uiItems).item.template.includes("Recent GitHub Auto Sync history") &&
-      latestToolbar(uiItems).item.template.includes("✅") &&
-      latestToolbar(uiItems).item.template.includes("toolbar"),
+    successHistoryTemplate.includes("Recent GitHub Auto Sync history") &&
+      /github-auto-sync-history-row success[\s\S]*github-auto-sync-history-icon">✅/.test(successHistoryTemplate) &&
+      successHistoryTemplate.includes("toolbar"),
     "expected sync history panel to show successful recent sync entries"
+  );
+
+  const missingSourceStatus = createContext({
+    fetchResult: {
+      exitCode: 0,
+      stdout: "sync complete: committed=true encrypted_files=17 lfs_files=2",
+      stderr: ""
+    }
+  });
+  await missingSourceStatus.readyPromise;
+  missingSourceStatus.context.logseq.model.githubAutoSyncNow();
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  missingSourceStatus.context.logseq.model.githubAutoSyncHistory();
+  const missingSourceHistoryTemplate = latestToolbar(missingSourceStatus.uiItems).item.template;
+  assert(
+    /github-auto-sync-history-row success[\s\S]*github-auto-sync-history-icon">✅/.test(missingSourceHistoryTemplate) &&
+      !/github-auto-sync-history-row warning[\s\S]*GitHub staging sync complete/.test(missingSourceHistoryTemplate),
+    "expected successful sync output to stay success even when source graph status is absent"
   );
 
   const dirty = createContext({
@@ -270,9 +289,25 @@ function latestToolbar(uiItems) {
   warning.context.logseq.model.githubAutoSyncHistory();
   assert(
     latestToolbar(warning.uiItems).item.template.includes("Recent GitHub Auto Sync history") &&
-      latestToolbar(warning.uiItems).item.template.includes("⚠") &&
+      /github-auto-sync-history-row warning[\s\S]*github-auto-sync-history-icon">⚠️/.test(latestToolbar(warning.uiItems).item.template) &&
       latestToolbar(warning.uiItems).item.template.includes("GitHub repo URL"),
     "expected sync history panel to distinguish warning entries"
+  );
+
+  const failed = createContext({
+    fetchResult: {
+      exitCode: 1,
+      stdout: "",
+      stderr: "simulated sync failure"
+    }
+  });
+  await failed.readyPromise;
+  failed.context.logseq.model.githubAutoSyncNow();
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  failed.context.logseq.model.githubAutoSyncHistory();
+  assert(
+    /github-auto-sync-history-row failed[\s\S]*github-auto-sync-history-icon">❌/.test(latestToolbar(failed.uiItems).item.template),
+    "expected failed sync history entries to use the failed icon"
   );
 
   console.log("main plugin root tests passed");
